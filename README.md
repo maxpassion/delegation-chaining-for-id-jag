@@ -12,8 +12,8 @@ identities as the actor.
 
 ## Layout
 
-- `draft-liu-parecki-oauth-delegation-chaining-00.xml` is the source of truth.
-- [draft-liu-parecki-oauth-delegation-chaining-00.md](draft-liu-parecki-oauth-delegation-chaining-00.md) is the generated Markdown rendering, kept at the repository root for easy review and discussion.
+- `draft-liu-parecki-oauth-delegation-chaining-00.md` is the source of truth.
+- [draft-liu-parecki-oauth-delegation-chaining-00.xml](draft-liu-parecki-oauth-delegation-chaining-00.xml) is the generated XML rendering, kept at the repository root for easy review and discussion.
 - `build/` holds the generated HTML and text versions, rebuilt automatically on every XML change by GitHub Actions.
 - `tools/md-filter.lua` cleans the Markdown output when converting from HTML.
 
