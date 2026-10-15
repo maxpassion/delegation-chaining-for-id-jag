@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reference anchor="I-D.ietf-oauth-spiffe-client-auth" target="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02">
+   <front>
+      <title>OAuth SPIFFE Client Authentication</title>
+      <author initials="A." surname="Schwenkschuster" fullname="Arndt Schwenkschuster">
+         <organization>Defakto Security</organization>
+      </author>
+      <author initials="P." surname="Kasselman" fullname="Pieter Kasselman">
+         <organization>Defakto Security</organization>
+      </author>
+      <author initials="S." surname="Rose" fullname="Scott Rose">
+         <organization>NIST</organization>
+      </author>
+      <author initials="S." surname="Thorgersen" fullname="Stian Thorgersen">
+         <organization>IBM</organization>
+      </author>
+      <author initials="N." surname="Cam-Winget" fullname="Nancy Cam-Winget">
+         <organization>Cisco Systems</organization>
+      </author>
+      <date month="June" day="15" year="2026" />
+      <abstract>
+	 <t>   This specification profiles the Assertion Framework for OAuth 2.0
+   Client Authentication and Authorization Grants [RFC7521], the JWT
+   Profile for OAuth 2.0 Client Authentication and Authorization Grants
+   [RFC7523], and OAuth 2.0 Attestation-Based Client Authentication
+   [I-D.draft-ietf-oauth-attestation-based-client-auth] to enable the
+   use of SPIFFE Verifiable Identity Documents (SVIDs) as client
+   credentials in OAuth 2.0.  It defines how OAuth clients with SPIFFE
+   credentials can authenticate to OAuth authorization servers using
+   their JWT-SVIDs, WIT-SVIDs, or X.509-SVIDs without the need for
+   client secrets.  This approach enhances security by enabling seamless
+   integration between SPIFFE-enabled workloads and OAuth authorization
+   servers while eliminating the need to distribute and manage shared
+   secrets such as static client secrets.
+
+	 </t>
+      </abstract>
+   </front>
+   <seriesInfo name="Internet-Draft" value="draft-ietf-oauth-spiffe-client-auth-02" />
+   
+</reference>

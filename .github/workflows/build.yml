@@ -3,8 +3,7 @@ name: build
 on:
   push:
     paths:
-      - "*.xml"
-      - "tools/md-filter.lua"
+      - "*.md"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -17,33 +16,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install xml2rfc
-        run: pip install xml2rfc
-
-      - name: Ensure pandoc
+      - name: Install tools
         run: |
-          command -v pandoc || (sudo apt-get update -q && sudo apt-get install -y -q pandoc)
+          gem install kramdown-rfc2629 --no-document
+          pip install xml2rfc
 
       - name: Build outputs
         run: |
           mkdir -p build
-          rm -f build/*.md
-          for xml in *.xml; do
-            base="${xml%.xml}"
-            xml2rfc --v3 "$xml" --html -o "build/$base.html"
-            xml2rfc --v3 "$xml" --text -o "build/$base.txt"
-            pandoc "build/$base.html" -f html -t gfm --wrap=none --lua-filter=tools/md-filter.lua -o "$base.md"
+          for md in draft-*.md; do
+            base="${md%.md}"
+            kdrfc -3 -h "$md"
+            mv "$base.xml" "$base.html" "$base.txt" build/
           done
+
+      - name: Check for broken references
+        run: |
+          if grep -rl "BROKEN REFERENCE" build/; then
+            echo "::error::Broken reference in generated output (reference fetch failed?)"
+            exit 1
+          fi
 
       - name: Commit build outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build ./*.md
+          git add build
           if git diff --cached --quiet; then
             echo "No build changes."
           else

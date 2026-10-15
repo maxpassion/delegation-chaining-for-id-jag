@@ -12,18 +12,24 @@ identities as the actor.
 
 ## Layout
 
-- `draft-liu-parecki-oauth-delegation-chaining-00.md` is the source of truth.
-- [draft-liu-parecki-oauth-delegation-chaining-00.xml](draft-liu-parecki-oauth-delegation-chaining-00.xml) is the generated XML rendering, kept at the repository root for easy review and discussion.
-- `build/` holds the generated HTML and text versions, rebuilt automatically on every XML change by GitHub Actions.
-- `tools/md-filter.lua` cleans the Markdown output when converting from HTML.
+- [draft-liu-parecki-oauth-delegation-chaining-00.md](draft-liu-parecki-oauth-delegation-chaining-00.md)
+  is the source of truth, written in the [kramdown-rfc](https://github.com/cabo/kramdown-rfc)
+  dialect of Markdown.
+- `build/` holds the generated RFC XML v3, HTML, and text renditions, rebuilt
+  automatically on every Markdown change by GitHub Actions.
 
 ## Building locally
 
+    gem install kramdown-rfc2629
     pip install xml2rfc
-    xml2rfc --v3 draft-liu-parecki-oauth-delegation-chaining-00.xml --html -o build/draft.html
-    xml2rfc --v3 draft-liu-parecki-oauth-delegation-chaining-00.xml --text -o build/draft.txt
+    kdrfc -3 -h draft-liu-parecki-oauth-delegation-chaining-00.md
+
+This produces the `.xml`, `.html`, and `.txt` renditions next to the Markdown
+source and caches fetched references in `.refcache/`.
 
 ## Reviewing
 
-The Markdown file at the repository root is intended for line-based review and
-discussion. Please send changes to the XML source, not to the generated files.
+Please edit the Markdown source directly. Citations use the kramdown-rfc
+syntax: `{{!RFC6749}}` for a normative reference, `{{?RFC7517}}` for an
+informative one, and `{{Section 4.1 of !RFC8693}}` to cite a specific section.
+Do not edit the files under `build/`; they are generated.
