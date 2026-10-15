@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "*.xml"
-      - "md-filter.lua"
+      - "tools/md-filter.lua"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -31,18 +31,19 @@ jobs:
       - name: Build outputs
         run: |
           mkdir -p build
+          rm -f build/*.md
           for xml in *.xml; do
             base="${xml%.xml}"
             xml2rfc --v3 "$xml" --html -o "build/$base.html"
             xml2rfc --v3 "$xml" --text -o "build/$base.txt"
-            pandoc "build/$base.html" -f html -t gfm --wrap=none --lua-filter=md-filter.lua -o "build/$base.md"
+            pandoc "build/$base.html" -f html -t gfm --wrap=none --lua-filter=tools/md-filter.lua -o "$base.md"
           done
 
       - name: Commit build outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build
+          git add build ./*.md
           if git diff --cached --quiet; then
             echo "No build changes."
           else
