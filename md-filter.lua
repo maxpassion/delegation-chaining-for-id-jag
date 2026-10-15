@@ -25,7 +25,12 @@ function Table(el)
 end
 
 function Link(el)
+  if el.classes:includes("pilcrow") then
+    return {}
+  end
   if (el.target or ""):sub(1, 1) == "#" then
     return el.content
   end
+  el.attr = pandoc.Attr("", {}, {})
+  return el
 end
