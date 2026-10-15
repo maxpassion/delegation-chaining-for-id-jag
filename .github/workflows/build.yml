@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "*.xml"
+      - "md-filter.lua"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -34,7 +35,7 @@ jobs:
             base="${xml%.xml}"
             xml2rfc --v3 "$xml" --html -o "build/$base.html"
             xml2rfc --v3 "$xml" --text -o "build/$base.txt"
-            pandoc "build/$base.html" -f html -t gfm --wrap=none -o "build/$base.md"
+            pandoc "build/$base.html" -f html -t gfm --wrap=none --lua-filter=md-filter.lua -o "build/$base.md"
           done
 
       - name: Commit build outputs
