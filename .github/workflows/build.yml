@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+    paths:
+      - "*.xml"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install xml2rfc
+        run: pip install xml2rfc
+
+      - name: Ensure pandoc
+        run: |
+          command -v pandoc || (sudo apt-get update -q && sudo apt-get install -y -q pandoc)
+
+      - name: Build outputs
+        run: |
+          mkdir -p build
+          for xml in *.xml; do
+            base="${xml%.xml}"
+            xml2rfc --v3 "$xml" --html -o "build/$base.html"
+            xml2rfc --v3 "$xml" --text -o "build/$base.txt"
+            pandoc "build/$base.html" -f html -t gfm --wrap=none -o "build/$base.md"
+          done
+
+      - name: Commit build outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build
+          if git diff --cached --quiet; then
+            echo "No build changes."
+          else
+            git commit -m "Rebuild outputs [skip ci]"
+            git push
+          fi
