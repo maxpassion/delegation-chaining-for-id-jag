@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Delegation Chaining for the Identity Assertion JWT Authorization Grant</title>
+<meta content="Dapeng Liu" name="author">
+<meta content="Aaron Parecki" name="author">
+<meta content="
+       
+        The Identity Assertion JWT Authorization Grant (ID-JAG) defines how a
+        client obtains a delegated authorization grant from an identity
+        assertion. It leaves the validation of the actor_token, the related
+        policy evaluation, and the act claim of the issued ID-JAG open for
+        future profiles. This specification defines those rules for delegation
+        chains, in which a series of workloads, such as AI agents, act on
+        behalf of an initial end-user across multiple hops.
+       
+       
+        Each delegating workload authenticates with a SPIFFE JWT-SVID and
+        presents the ID-JAG it holds as the subject_token of an OAuth 2.0
+        Token Exchange request. The Authorization Server validates the
+        workload identity, checks that the actor matches the may_act claim of
+        the subject_token, and enforces monotonic scope attenuation. It then
+        issues a new ID-JAG for the next hop, carrying the actor chain in the
+        act claim. An optional variant based on self-issued Delegation
+        Assertions is defined for hops where the Authorization Server is not
+        reachable.
+       
+    " name="description">
+<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="OAuth" name="keyword">
+<meta content="Token Exchange" name="keyword">
+<meta content="Delegation" name="keyword">
+<meta content="ID-JAG" name="keyword">
+<meta content="SPIFFE" name="keyword">
+<meta content="AI Agents" name="keyword">
+<meta content="Workload Identity" name="keyword">
+<meta content="draft-liu-parecki-oauth-delegation-chaining-00" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.1
+    Python 3.12.15
+    ConfigArgParse 1.8.0
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.3
+    natsort 8.4.0
+    platformdirs 4.13.0
+    pycountry 26.2.16
+    PyYAML 6.0.3
+    requests 2.34.2
+    wcwidth 0.9.2
+-->
+<link href="draft-liu-parecki-oauth-delegation-chaining-00.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://static.ietf.org/fonts/noto-sans/import.css'); /* Sans-serif */
+@import url('https://static.ietf.org/fonts/noto-serif/import.css'); /* Serif (print) */
+@import url('https://static.ietf.org/fonts/roboto-mono/import.css'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+@media print {
+  svg {
+    max-height: 850px;
+    max-width: 660px;
+  }
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+.xref {
+  overflow-wrap: normal;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+sub,
+sup {
+ white-space: nowrap;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    max-width: 100%;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.refSubseries {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+  table {
+    page-break-inside: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: upper-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code, dt tt, dt code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > blockquote:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+<script type="application/javascript">async function addMetadata(){try{const e=document.styleSheets[0].cssRules;for(let t=0;t<e.length;t++)if(/#identifiers/.exec(e[t].selectorText)){const a=e[t].cssText.replace("#identifiers","#external-updates");document.styleSheets[0].insertRule(a,document.styleSheets[0].cssRules.length)}}catch(e){console.log(e)}const e=document.getElementById("external-metadata");if(e)try{var t,a="",o=function(e){const t=document.getElementsByTagName("meta");for(let a=0;a<t.length;a++)if(t[a].getAttribute("name")===e)return t[a].getAttribute("content");return""}("rfc.number");if(o){t="https://www.rfc-editor.org/rfc/rfc"+o+".json";try{const e=await fetch(t);a=await e.json()}catch(e){t=document.URL.indexOf("html")>=0?document.URL.replace(/html$/,"json"):document.URL+".json";const o=await fetch(t);a=await o.json()}}if(!a)return;e.style.display="block";const s="",d="https://datatracker.ietf.org/doc",n="https://datatracker.ietf.org/ipr/search",c="https://www.rfc-editor.org/info",l=a.doc_id.toLowerCase(),i=a.doc_id.slice(0,3).toLowerCase(),f=a.doc_id.slice(3).replace(/^0+/,""),u={status:"Status",obsoletes:"Obsoletes",obsoleted_by:"Obsoleted By",updates:"Updates",updated_by:"Updated By",see_also:"See Also",errata_url:"Errata"};let h="<dl style='overflow:hidden' id='external-updates'>";["status","obsoletes","obsoleted_by","updates","updated_by","see_also","errata_url"].forEach(e=>{if("status"==e){a[e]=a[e].toLowerCase();var t=a[e].split(" "),o=t.length,w="",p=1;for(let e=0;e<o;e++)p<o?w=w+r(t[e])+" ":w+=r(t[e]),p++;a[e]=w}else if("obsoletes"==e||"obsoleted_by"==e||"updates"==e||"updated_by"==e){var g,m="",b=1;g=a[e].length;for(let t=0;t<g;t++)a[e][t]&&(a[e][t]=String(a[e][t]).toLowerCase(),m=b<g?m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>, ":m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>",b++);a[e]=m}else if("see_also"==e){var y,L="",C=1;y=a[e].length;for(let t=0;t<y;t++)if(a[e][t]){a[e][t]=String(a[e][t]);var _=a[e][t].slice(0,3),v=a[e][t].slice(3).replace(/^0+/,"");L=C<y?"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>, ":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>, ":"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>",C++}a[e]=L}else if("errata_url"==e){var R="";R=a[e]?R+"<a href='"+a[e]+"'>Errata exist</a> | <a href='"+d+"/"+l+"'>Datatracker</a>| <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>":"<a href='"+d+"/"+l+"'>Datatracker</a> | <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>",a[e]=R}""!=a[e]?"Errata"==u[e]?h+=`<dt>More info:</dt><dd>${a[e]}</dd>`:h+=`<dt>${u[e]}:</dt><dd>${a[e]}</dd>`:"Errata"==u[e]&&(h+=`<dt>More info:</dt><dd>${a[e]}</dd>`)}),h+="</dl>",e.innerHTML=h}catch(e){console.log(e)}else console.log("Could not locate metadata <div> element");function r(e){return e.charAt(0).toUpperCase()+e.slice(1)}}window.removeEventListener("load",addMetadata),window.addEventListener("load",addMetadata);</script>
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">Delegation Chaining for ID-JAG</td>
+<td class="right">October 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Liu &amp; Parecki</td>
+<td class="center">Expires 18 April 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-liu-parecki-oauth-delegation-chaining-00</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-10-15" class="published">15 October 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-04-18">18 April 2027</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">D. Liu</div>
+<div class="org">Alibaba Group</div>
+</div>
+<div class="author">
+      <div class="author-name">A. Parecki</div>
+<div class="org">Okta</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Delegation Chaining for the Identity Assertion JWT Authorization Grant</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">
+        The Identity Assertion JWT Authorization Grant (ID-JAG) defines how a
+        client obtains a delegated authorization grant from an identity
+        assertion. It leaves the validation of the actor_token, the related
+        policy evaluation, and the act claim of the issued ID-JAG open for
+        future profiles. This specification defines those rules for delegation
+        chains, in which a series of workloads, such as AI agents, act on
+        behalf of an initial end-user across multiple hops.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">
+        Each delegating workload authenticates with a SPIFFE JWT-SVID and
+        presents the ID-JAG it holds as the subject_token of an OAuth 2.0
+        Token Exchange request. The Authorization Server validates the
+        workload identity, checks that the actor matches the may_act claim of
+        the subject_token, and enforces monotonic scope attenuation. It then
+        issues a new ID-JAG for the next hop, carrying the actor chain in the
+        act claim. An optional variant based on self-issued Delegation
+        Assertions is defined for hops where the Authorization Server is not
+        reachable.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 18 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction-and-problem-st" class="internal xref">Introduction and Problem Statement</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology-and-architectur" class="internal xref">Terminology and Architecture Overview</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-workload-identity-of-the-ac" class="internal xref">Workload Identity of the Actor</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-delegation-chaining-with-to" class="internal xref">Delegation Chaining with Token Exchange</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-token-exchange-request" class="internal xref">Token Exchange Request</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-authorization-server-proces" class="internal xref">Authorization Server Processing Requirements</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-the-issued-id-jag" class="internal xref">The Issued ID-JAG</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-optional-variant-self-issue" class="internal xref">Optional Variant: Self-Issued Delegation Assertions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-applicability" class="internal xref">Applicability</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-assertion-format" class="internal xref">Assertion Format</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-re-issuance-rules" class="internal xref">Re-Issuance Rules</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-redemption-at-the-authoriza" class="internal xref">Redemption at the Authorization Server</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-audience-and-hop-binding" class="internal xref">Audience and Hop Binding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-monotonic-attenuation" class="internal xref">Monotonic Attenuation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-replay-prevention" class="internal xref">Replay Prevention</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-transport-and-confidentiali" class="internal xref">Transport and Confidentiality</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-workload-identity-compromis" class="internal xref">Workload Identity Compromise</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-complete-end-to-end-use-cas" class="internal xref">Complete End-to-End Use Case: Multi-Hop Financial Research Agent Workflow</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-scenario-overview" class="internal xref">Scenario Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-step-by-step-protocol-flow" class="internal xref">Step-by-Step Protocol Flow</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction-and-problem-st">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction-and-problem-st" class="section-name selfRef">Introduction and Problem Statement</a>
+      </h2>
+<p id="section-1-1">In modern distributed multi-tier application architectures and autonomous AI agent ecosystems (e.g., User -&gt; Agent A -&gt; Agent B -&gt; Agent C -&gt; MCP Tool), service-to-service execution chains frequently cross trust boundaries while operating on behalf of an initial end-user.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The OAuth 2.0 framework <a href="#RFC6749" class="internal xref">RFC 6749</a> and the Identity Assertion JWT Authorization Grant (ID-JAG) <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a> address identity assertions and authorization grants for single-hop scenarios. However, two gaps remain in multi-hop execution chains:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1-3">
+        <li id="section-1-3.1">
+          <p id="section-1-3.1.1">The actor_token validation gap. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.3" class="relref">Section 4.3</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> states: "This specification does not define normative processing requirements for actor_token or whether an act claim is included in the issued ID-JAG. Future profiles or extensions MAY define how actor_token is validated, how it influences policy evaluation, and whether it results in an act claim in the issued ID-JAG."<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-3.2">
+          <p id="section-1-3.2.1">The delegation continuation gap. A standardized mechanism is needed that lets an intermediate delegate, e.g., Agent B, propagate the end-user's authorization further down the chain, e.g., to Agent C, with strictly narrowed privileges, while keeping every hop verifiable against a common trust root.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-1-4">This specification is such a profile. It defines how actor_token is validated, how it influences policy evaluation, and how the act claim is populated when ID-JAGs are chained across multiple hops. The mechanism combines:<a href="#section-1-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1-5">
+        <li id="section-1-5.1">
+          <p id="section-1-5.1.1">SPIFFE workload identities, carried as JWT-SVIDs, as the machine identity of each actor <a href="#SPIFFE-ID" class="internal xref">SPIFFE-ID</a> <a href="#SPIFFE-JWT-SVID" class="internal xref">SPIFFE-JWT-SVID</a>.<a href="#section-1-5.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-5.2">
+          <p id="section-1-5.2.1">OAuth 2.0 Token Exchange <a href="#RFC8693" class="internal xref">RFC 8693</a> as the point where the machine identity of the delegating workload and the delegated authorization of the end-user are verified and merged by the Authorization Server (AS).<a href="#section-1-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-5.3">
+          <p id="section-1-5.3.1">The may_act claim (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to bind each issued ID-JAG to the entity entitled to redeem it at the next hop, and the act claim (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) to carry the delegation lineage.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-1-6">Every hop of the chain performs exactly one Token Exchange request. The AS is the only issuer of ID-JAGs in the chain, so privilege attenuation is enforced by the AS at every hop rather than merely asserted by the delegating entity, and the full lineage, e.g., User -&gt; Agent A -&gt; Agent B -&gt; Agent C, is carried in the act claim of the final Access Token.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">For hops where a round trip to the AS is not practical, for example across trust domains with no reachable common AS, this document also defines an optional variant based on self-issued Delegation Assertions, see <a href="#self-issued" class="auto internal xref">Section 5</a>. That variant offers weaker guarantees and supplements, but does not replace, the Token Exchange mechanism.<a href="#section-1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="terminology">
+<section id="section-2">
+      <h2 id="name-terminology-and-architectur">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology-and-architectur" class="section-name selfRef">Terminology and Architecture Overview</a>
+      </h2>
+<p id="section-2-1">This specification uses the terms "authorization server" (AS), "client", "resource server" (RS), and "access token" defined in <a href="#RFC6749" class="internal xref">RFC 6749</a>, the token exchange parameters defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the act and may_act claims defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">In addition, this specification defines the following roles and credentials:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">ID-JAG</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">An Identity Assertion JWT Authorization Grant <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>. In this profile, an ID-JAG represents the delegated authorization of the end-user held by one entity of the chain.<a href="#section-2-3.2" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Delegating Entity (e.g., Agent A / Service A)</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">An upstream workload that holds an ID-JAG and delegates a sub-operation or task to a downstream entity.<a href="#section-2-3.4" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">Target Entity (e.g., Agent B / Service B)</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">A downstream workload that receives the delegated authorization, executes computations, or further delegates to subsequent entities.<a href="#section-2-3.6" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">Workload Identity (SPIFFE SVID)</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">A machine identity credential issued to each workload instance by trusted infrastructure, such as SPIRE, serving as the immutable actor proof <a href="#SPIFFE-ID" class="internal xref">SPIFFE-ID</a> <a href="#SPIFFE-JWT-SVID" class="internal xref">SPIFFE-JWT-SVID</a>.<a href="#section-2-3.8" class="pilcrow">¶</a>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.9">Delegation Assertion (DA)</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.10">A short-lived JWT self-issued by a delegating entity in the optional variant of <a href="#self-issued" class="auto internal xref">Section 5</a>, carrying the initial user context, the delegation history, and privilege attenuation limits.<a href="#section-2-3.10" class="pilcrow">¶</a>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-2-4">The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they appear in all capitals, as shown here.<a href="#section-2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="workload-identity">
+<section id="section-3">
+      <h2 id="name-workload-identity-of-the-ac">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-workload-identity-of-the-ac" class="section-name selfRef">Workload Identity of the Actor</a>
+      </h2>
+<p id="section-3-1">Every workload in the chain, for example an AI agent runtime or a container hosting an agentic loop, is provisioned with a cryptographic machine identity by trusted infrastructure, such as a SPIRE server. The identity is a SPIFFE ID <a href="#SPIFFE-ID" class="internal xref">SPIFFE-ID</a> of the form:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<div class="sourcecode" id="section-3-2">
+<pre>spiffe://&lt;trust-domain&gt;/ns/&lt;namespace&gt;/sa/&lt;workload-name&gt;</pre><a href="#section-3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3-3">The workload proves this identity with a JWT-SVID, a JWT whose sub claim carries the SPIFFE ID and which is signed by the SPIRE server of the trust domain. Verifying a JWT-SVID requires the SPIFFE trust bundle of that trust domain. JWT-SVIDs are short-lived by design <a href="#SPIFFE-JWT-SVID" class="internal xref">SPIFFE-JWT-SVID</a>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">In this profile, the JWT-SVID of the delegating entity is presented as the actor_token of the Token Exchange request described in <a href="#exchange-request" class="auto internal xref">Section 4.2</a>. This binds the machine identity of the current actor into the delegation chain, independently of any application-level identity. The JWT-SVID MAY also serve as the client authentication credential at the token endpoint, as described in <a href="#I-D.ietf-oauth-spiffe-client-auth" class="internal xref">draft-ietf-oauth-spiffe-client-auth</a>. When SVID-based client authentication is not used, the AS MUST still authenticate the client with some other mechanism.<a href="#section-3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="chaining">
+<section id="section-4">
+      <h2 id="name-delegation-chaining-with-to">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-delegation-chaining-with-to" class="section-name selfRef">Delegation Chaining with Token Exchange</a>
+      </h2>
+<div id="chain-overview">
+<section id="section-4.1">
+        <h3 id="name-overview">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
+        </h3>
+<p id="section-4.1-1">The chain starts like any ID-JAG flow. The end-user authenticates to the AS, for example with OpenID Connect <a href="#OpenID.Core" class="internal xref">OpenID.Core</a>. The first workload, Agent A, requests its initial ID-JAG with the ID-JAG grant <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>, presenting the end-user's identity assertion. The initial ID-JAG has the end-user as its subject and carries the end-user's authorization for Agent A.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">When Agent A decides to delegate a sub-operation to Agent B, it does not mint the delegated credential itself. Agent A sends a Token Exchange request to the token endpoint of the AS: subject_token is the ID-JAG Agent A holds, actor_token is Agent A's JWT-SVID, and audience names Agent B. The AS validates the request as described in <a href="#as-processing" class="auto internal xref">Section 4.3</a> and issues a new ID-JAG. The subject remains the end-user, the act claim records Agent A as the current actor, and the may_act claim names Agent B as the entity entitled to redeem the new ID-JAG.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-3">Agent A passes the new ID-JAG to Agent B over the inter-agent transport, for example an HTTP header, gRPC metadata, or an MCP payload. Agent B now holds the delegated authorization and can either redeem it for an Access Token of a resource server or delegate further to Agent C in exactly the same way. Each hop of the chain therefore performs exactly one Token Exchange request, and every ID-JAG in the chain is issued by the same AS.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+<p id="section-4.1-4">The chain ends when the last workload exchanges the ID-JAG it holds for an Access Token of the resource server it needs to call. The Access Token carries the complete actor chain in its act claim, e.g., User -&gt; Agent A -&gt; Agent B -&gt; Agent C, which gives the resource server verifiable multi-hop provenance.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.1-5">When the target entity operates in a different trust domain with its own AS, the AS of the delegating entity issues the ID-JAG with the aud claim set to the issuer identifier of the target domain's AS, as described in <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>. The target entity redeems the ID-JAG there. The processing requirements of <a href="#as-processing" class="auto internal xref">Section 4.3</a> apply at whichever AS redeems the ID-JAG.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="exchange-request">
+<section id="section-4.2">
+        <h3 id="name-token-exchange-request">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-token-exchange-request" class="section-name selfRef">Token Exchange Request</a>
+        </h3>
+<p id="section-4.2-1">Each hop of the chain is one Token Exchange request to the token endpoint of the AS, as defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, with the following parameters:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<div class="sourcecode" id="section-4.2-2">
+<pre>
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+subject_token=(the ID-JAG held by the delegating entity)
+subject_token_type=urn:ietf:params:oauth:token-type:id-jag
+actor_token=(the JWT-SVID of the delegating entity)
+actor_token_type=urn:ietf:params:oauth:token-type:jwt
+requested_token_type=urn:ietf:params:oauth:token-type:id-jag
+audience=(the SPIFFE ID or resource URI of the target entity)
+scope=(no wider than the scope of the subject_token)
+</pre><a href="#section-4.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4.2-3">The audience parameter names the target entity of the delegation, e.g., its SPIFFE ID. The aud claim of the issued ID-JAG continues to identify the AS that redeems it, as required by <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>. The AS records the target entity in the may_act claim of the issued ID-JAG instead, which binds the ID-JAG to the entity entitled to redeem it in the next exchange.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">The delegating entity is both the authenticated client and the actor of the exchange. It SHOULD authenticate at the token endpoint with its JWT-SVID, as described in <a href="#I-D.ietf-oauth-spiffe-client-auth" class="internal xref">draft-ietf-oauth-spiffe-client-auth</a>, so that the client identity and the actor_token carry the same machine identity. Other client authentication methods MAY be used, in which case the AS still MUST verify that the actor_token matches the authenticated client, see <a href="#as-processing" class="auto internal xref">Section 4.3</a>.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-5">The last hop of the chain requests an Access Token instead of an ID-JAG, with requested_token_type=urn:ietf:params:oauth:token-type:access_token and audience set to the resource server. The response to every exchange follows <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.1" class="relref">Section 2.2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>. For an ID-JAG, the ID-JAG is returned in the access_token parameter and token_type is set to N_A.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="as-processing">
+<section id="section-4.3">
+        <h3 id="name-authorization-server-proces">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-authorization-server-proces" class="section-name selfRef">Authorization Server Processing Requirements</a>
+        </h3>
+<p id="section-4.3-1">Upon receiving a Token Exchange request as described in <a href="#exchange-request" class="auto internal xref">Section 4.2</a>, the AS executes the following verification and policy evaluation pipeline. These requirements answer the questions that <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.3" class="relref">Section 4.3</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> leaves open, and they apply at every hop of the chain:<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.3-2">
+          <li id="section-4.3-2.1">
+            <p id="section-4.3-2.1.1">Client authentication: The AS MUST authenticate the client making the request. SVID-based client authentication <a href="#I-D.ietf-oauth-spiffe-client-auth" class="internal xref">draft-ietf-oauth-spiffe-client-auth</a> SHOULD be used, in which case the authenticated client is identified by its SPIFFE ID.<a href="#section-4.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.2">
+            <p id="section-4.3-2.2.1">Actor validation: The actor_token MUST be a JWT-SVID <a href="#SPIFFE-JWT-SVID" class="internal xref">SPIFFE-JWT-SVID</a>. The AS MUST verify its signature against the SPIFFE trust bundle of the actor's trust domain, MUST verify its temporal validity (exp and nbf), and MUST verify that it is an intended audience of the JWT-SVID as identified by its aud claim. The SPIFFE ID in the sub claim of the actor_token MUST identify the authenticated client. The AS MUST reject the request otherwise.<a href="#section-4.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.3">
+            <p id="section-4.3-2.3.1">Subject validation: The subject_token MUST be validated as an ID-JAG as required by <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>, including signature, issuer, audience, expiration, not-before, and jti. The aud claim of the subject_token MUST identify the AS itself. Because the AS issued every ID-JAG in the chain, the signature of the subject_token also covers its act chain.<a href="#section-4.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.4">
+            <p id="section-4.3-2.4.1">Hop binding: If the subject_token contains a may_act claim, the AS MUST verify that the sub member of may_act equals the SPIFFE ID of the actor_token, and MUST reject the request otherwise. This binds every ID-JAG to its intended redeemer, so a stolen ID-JAG cannot be redeemed by a different workload, and the delegating entity itself cannot redeem the ID-JAG it requested for its target. If the subject_token contains no may_act claim, the AS MUST apply its own policy to decide whether the current actor may delegate the subject_token further.<a href="#section-4.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.5">
+            <p id="section-4.3-2.5.1">Attenuation check: The requested scope and authorization_details <a href="#RFC9396" class="internal xref">RFC 9396</a> MUST be a subset of or equal to those of the subject_token. The AS MUST reject any request that would widen privileges, including requests that add actions, datatypes, or locations to an authorization_details object of the subject_token. The AS MAY further narrow the granted scope and authorization_details based on policy.<a href="#section-4.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.6">
+            <p id="section-4.3-2.6.1">Delegation policy: The AS MUST apply its delegation policy, e.g., which workloads may call which downstream entities, and which scopes each target entity may receive at all. Policy evaluation takes both the actor identity and the subject authorization as input.<a href="#section-4.3-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.3-2.7">
+            <p id="section-4.3-2.7.1">Issuance: The AS issues the new ID-JAG with the subject unchanged, i.e., the end-user, and with the attenuated scope and authorization_details. The act and may_act claims are populated as described in <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>. The lifetime of the issued ID-JAG SHOULD be short, and the jti value MUST be unique among all tokens issued by the AS.<a href="#section-4.3-2.7.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="issued-id-jag">
+<section id="section-4.4">
+        <h3 id="name-the-issued-id-jag">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-the-issued-id-jag" class="section-name selfRef">The Issued ID-JAG</a>
+        </h3>
+<p id="section-4.4-1">The issued ID-JAG carries the end-user as its subject, the attenuated privileges, and the actor chain. The act claim follows <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>: the outermost value represents the current actor, and nested values represent prior actors. At each exchange, the AS sets the outermost act value to the actor of the current request and nests the act claim of the subject_token inside it. The may_act claim follows <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and names the target entity, i.e., the party entitled to act as the actor in the next exchange.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-2">The following is an example of the ID-JAG issued for the first hop, where Agent A delegates to Agent B:<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.4-3">
+<pre>
+{
+  "iss": "https://auth.enterprise.net",
+  "sub": "user_original_12345",
+  "aud": "https://auth.enterprise.net",
+  "client_id": "spiffe://cluster.local/ns/ai/sa/agent-researcher",
+  "exp": 1776326800,
+  "iat": 1776326740,
+  "jti": "urn:uuid:8e41-4b72-9b2a-111122223333",
+  "scope": "reports:read",
+  "act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-researcher"
+  },
+  "may_act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy"
+  }
+}
+</pre><a href="#section-4.4-3" class="pilcrow">¶</a>
+</div>
+<p id="section-4.4-4">The following is an example of the ID-JAG issued for the second hop, where Agent B delegates to Agent C. The act claim nests the actor chain, and the scope has been attenuated further:<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.4-5">
+<pre>
+{
+  "iss": "https://auth.enterprise.net",
+  "sub": "user_original_12345",
+  "aud": "https://auth.enterprise.net",
+  "client_id": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy",
+  "exp": 1776326900,
+  "iat": 1776326840,
+  "jti": "urn:uuid:f901-2222-3333-444455556666",
+  "scope": "reports:read:q3_only",
+  "act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy",
+    "act": {
+      "sub": "spiffe://cluster.local/ns/ai/sa/agent-researcher"
+    }
+  },
+  "may_act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-worker"
+  }
+}
+</pre><a href="#section-4.4-5" class="pilcrow">¶</a>
+</div>
+<p id="section-4.4-6">Deployments MAY carry additional claims in the issued ID-JAG, e.g., task context for AI agent workloads, as long as the claims required by <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a> are present.<a href="#section-4.4-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="self-issued">
+<section id="section-5">
+      <h2 id="name-optional-variant-self-issue">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-optional-variant-self-issue" class="section-name selfRef">Optional Variant: Self-Issued Delegation Assertions</a>
+      </h2>
+<p id="section-5-1">This section defines an optional variant for hops where a Token Exchange round trip to the AS is not practical. It keeps the protocol shape of the primary mechanism, a signed JWT passed in-band and redeemed together with a workload identity, but moves assertion issuance from the AS to the delegating entities themselves.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="self-issued-applicability">
+<section id="section-5.1">
+        <h3 id="name-applicability">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-applicability" class="section-name selfRef">Applicability</a>
+        </h3>
+<p id="section-5.1-1">The self-issued variant applies when the delegating entity and the target entity operate in trust domains with no common reachable AS, or when the added latency of a synchronous exchange at every hop is unacceptable for the workload.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">The self-issued variant SHOULD NOT be used when the AS of the chain is reachable. Token Exchange gives the AS the opportunity to validate the actor and enforce attenuation at every hop. The self-issued variant cannot provide those guarantees, see <a href="#self-issued-redemption" class="auto internal xref">Section 5.4</a>.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="self-issued-format">
+<section id="section-5.2">
+        <h3 id="name-assertion-format">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-assertion-format" class="section-name selfRef">Assertion Format</a>
+        </h3>
+<p id="section-5.2-1">A Delegation Assertion (DA) is a JWT <a href="#RFC7519" class="internal xref">RFC 7519</a>. A delegating entity, e.g., Agent A, MUST possess a valid authorization grant or active token representing the end-user (sub) before it issues a downstream Delegation Assertion.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">Each Delegation Assertion MUST be signed using a private key cryptographically tied to the delegating entity's SPIFFE workload identity lifecycle. The AS validates the signature using the delegating entity's registered public key, retrieved via JWKS <a href="#RFC7517" class="internal xref">RFC 7517</a> or trusted infrastructure metadata.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.2-3">A Delegation Assertion contains the following claims:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-4.1">
+            <p id="section-5.2-4.1.1">iss: the SPIFFE ID of the delegating entity.<a href="#section-5.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.2">
+            <p id="section-5.2-4.2.1">sub: the subject identifier of the initial end-user.<a href="#section-5.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.3">
+            <p id="section-5.2-4.3.1">aud: the token endpoint of the AS at which the assertion is redeemed.<a href="#section-5.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.4">
+            <p id="section-5.2-4.4.1">exp and nbf: a short temporal validity window, a lifetime of 60 seconds or less is recommended.<a href="#section-5.2-4.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.5">
+            <p id="section-5.2-4.5.1">jti: a unique assertion identifier, used for replay prevention.<a href="#section-5.2-4.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.6">
+            <p id="section-5.2-4.6.1">scope: the attenuated privilege scope, no wider than the privileges of the issuing entity.<a href="#section-5.2-4.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.7">
+            <p id="section-5.2-4.7.1">authorization_details: optional fine-grained authorization details via <a href="#RFC9396" class="internal xref">RFC 9396</a>, e.g., access to specific API paths or MCP tools.<a href="#section-5.2-4.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.8">
+            <p id="section-5.2-4.8.1">act: nested actor identities, see <a href="#self-issued-rules" class="auto internal xref">Section 5.3</a>.<a href="#section-5.2-4.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.9">
+            <p id="section-5.2-4.9.1">agent_context: optional agentic context, e.g., task_id, goal, and delegation_depth.<a href="#section-5.2-4.9.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.2-5">The following is an example of an initial-hop Delegation Assertion:<a href="#section-5.2-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5.2-6">
+<pre>
+{
+  "iss": "spiffe://cluster.local/ns/prod/sa/service-a",
+  "sub": "user_original_12345",
+  "aud": "https://auth.enterprise.net/oauth/token",
+  "exp": 1776326800,
+  "nbf": 1776326740,
+  "jti": "urn:uuid:8e41-4b72-9b2a-111122223333",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ]
+}
+</pre><a href="#section-5.2-6" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="self-issued-rules">
+<section id="section-5.3">
+        <h3 id="name-re-issuance-rules">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-re-issuance-rules" class="section-name selfRef">Re-Issuance Rules</a>
+        </h3>
+<p id="section-5.3-1">When an intermediate entity, e.g., Agent B, needs to delegate further down the chain, e.g., to Agent C, it MUST NOT forward the original upstream assertion directly and MUST NOT contact the root IdP. It self-issues a new downstream Delegation Assertion following three rules:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3-2">
+          <li id="section-5.3-2.1">
+            <p id="section-5.3-2.1.1">Monotonic Scope Attenuation Rule: The re-issued assertion's scope or authorization_details MUST be a subset of or equal to the permissions granted to the re-issuing entity. Privilege escalation is strictly prohibited.<a href="#section-5.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-2.2">
+            <p id="section-5.3-2.2.1">Actor Chain Nesting Rule: The re-issuing entity MUST append the upstream issuer's identity into an act claim structure within the assertion payload, preserving auditability.<a href="#section-5.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-2.3">
+            <p id="section-5.3-2.3.1">Audience Re-Binding Rule: The re-issuing entity MUST update the aud claim to target the token endpoint of the downstream AS or resource boundary.<a href="#section-5.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.3-3">The following is an example of a re-issued assertion for the hop Agent B to Agent C:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5.3-4">
+<pre>
+{
+  "iss": "spiffe://cluster.local/ns/ai/sa/agent-b",
+  "sub": "user_original_12345",
+  "aud": "https://auth.enterprise.net/oauth/token",
+  "exp": 1776326900,
+  "nbf": 1776326840,
+  "jti": "urn:uuid:f901-2222-3333-444455556666",
+  "act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-a"
+  },
+  "scope": "reports:read:q3_only",
+  "agent_context": {
+    "task_id": "task-q3-summary-001",
+    "delegation_depth": 2
+  }
+}
+</pre><a href="#section-5.3-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="self-issued-redemption">
+<section id="section-5.4">
+        <h3 id="name-redemption-at-the-authoriza">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-redemption-at-the-authoriza" class="section-name selfRef">Redemption at the Authorization Server</a>
+        </h3>
+<p id="section-5.4-1">A target entity that received a Delegation Assertion redeems it at the AS named by the aud claim. The request is the Token Exchange request of <a href="#exchange-request" class="auto internal xref">Section 4.2</a>, with the Delegation Assertion as the subject_token, subject_token_type set to urn:ietf:params:oauth:token-type:jwt, and the target entity's JWT-SVID as the actor_token. The AS validates the Delegation Assertion signature via the delegating entity's public keys, checks exp, nbf, and jti, verifies the act chain lineage, and applies the attenuation and policy checks of <a href="#as-processing" class="auto internal xref">Section 4.3</a> before issuing an Access Token.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.4-2">This variant has weaker guarantees than the primary mechanism, and implementers need to understand them:<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.4-3.1">
+            <p id="section-5.4-3.1.1">The root authorization of the end-user is asserted by the first delegating entity, not issued by the AS. The AS SHOULD corroborate it, for example by requiring the end-user's token alongside the Delegation Assertion at redemption.<a href="#section-5.4-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-3.2">
+            <p id="section-5.4-3.2.1">Attenuation performed by intermediate entities is not independently verifiable. The AS trusts the signatures of the self-issued assertions and applies its own policy, but a compromised intermediate can misstate the privileges it inherited.<a href="#section-5.4-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-3.3">
+            <p id="section-5.4-3.3.1">A Delegation Assertion does not name the entity entitled to present it. Presenters are authenticated, but any holder can attempt redemption. Short lifetimes and policy restrictions limit this exposure but do not remove it.<a href="#section-5.4-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-6">
+      <h2 id="name-security-considerations">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="sec-audience">
+<section id="section-6.1">
+        <h3 id="name-audience-and-hop-binding">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-audience-and-hop-binding" class="section-name selfRef">Audience and Hop Binding</a>
+        </h3>
+<p id="section-6.1-1">The aud claim of every ID-JAG in the chain identifies the AS that redeems it, which prevents cross-service injection of ID-JAGs into other security domains. The may_act claim additionally binds each ID-JAG to the single entity entitled to redeem it. An ID-JAG stolen in transit or from a compromised workload cannot be redeemed by a different workload, because its JWT-SVID does not match may_act.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">For self-issued Delegation Assertions, the aud claim MUST be strictly locked to the token endpoint of the AS to prevent cross-service injection or replay.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-attenuation">
+<section id="section-6.2">
+        <h3 id="name-monotonic-attenuation">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-monotonic-attenuation" class="section-name selfRef">Monotonic Attenuation</a>
+        </h3>
+<p id="section-6.2-1">Downstream privilege scopes can only be equal to or narrower than upstream permissions. The AS enforces this at every hop of the primary mechanism, which eliminates unauthorized privilege expansion across multi-hop agent or service chains. In the self-issued variant, attenuation is asserted by the delegating entities and checked only at redemption time, see <a href="#self-issued-redemption" class="auto internal xref">Section 5.4</a>.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-replay">
+<section id="section-6.3">
+        <h3 id="name-replay-prevention">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-replay-prevention" class="section-name selfRef">Replay Prevention</a>
+        </h3>
+<p id="section-6.3-1">The AS MUST enforce jti uniqueness for the tokens it issues and for the Delegation Assertions it redeems. Self-issued Delegation Assertions MUST have a short lifespan, a lifetime of 60 seconds or less is recommended.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-transport">
+<section id="section-6.4">
+        <h3 id="name-transport-and-confidentiali">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-transport-and-confidentiali" class="section-name selfRef">Transport and Confidentiality</a>
+        </h3>
+<p id="section-6.4-1">ID-JAGs and Delegation Assertions are credentials passed over inter-agent transports, e.g., HTTP headers, gRPC metadata, or MCP payloads. They MUST be sent over TLS or an equivalently protected transport. They MUST NOT be logged or persisted in plaintext by intermediaries.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-workload">
+<section id="section-6.5">
+        <h3 id="name-workload-identity-compromis">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-workload-identity-compromis" class="section-name selfRef">Workload Identity Compromise</a>
+        </h3>
+<p id="section-6.5-1">The actor_token binds the chain to workload identities. A compromised workload can act within the privileges delegated to it. JWT-SVIDs are short-lived and rotated by the infrastructure, which limits the window of a stolen SVID. Compromise of an intermediate workload is bounded by the monotonic attenuation already applied upstream, but AS policy SHOULD also cap the total delegation depth and the privileges available to each hop.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-7">
+      <h2 id="name-iana-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-7-1">This document has no IANA actions.<a href="#section-7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<section id="section-8">
+      <h2 id="name-normative-references">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      </h2>
+<dl class="references">
+<dt id="RFC2119">[RFC2119]</dt>
+      <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+      <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6749">https://www.rfc-editor.org/info/rfc6749</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7519">[RFC7519]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7519">https://www.rfc-editor.org/info/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+      <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8693">[RFC8693]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Nadalin, A.</span>, <span class="refAuthor">Campbell, B., Ed.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"OAuth 2.0 Token Exchange"</span>, <span class="seriesInfo">RFC 8693</span>, <span class="seriesInfo">DOI 10.17487/RFC8693</span>, <time datetime="2020-01" class="refDate">January 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8693">https://www.rfc-editor.org/info/rfc8693</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9396">[RFC9396]</dt>
+      <dd>
+<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Richer, J.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"OAuth 2.0 Rich Authorization Requests"</span>, <span class="seriesInfo">RFC 9396</span>, <span class="seriesInfo">DOI 10.17487/RFC9396</span>, <time datetime="2023-05" class="refDate">May 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9396">https://www.rfc-editor.org/info/rfc9396</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-identity-assertion-authz-grant">[I-D.ietf-oauth-identity-assertion-authz-grant]</dt>
+      <dd>
+<span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-assertion-authz-grant-04</span>, <time datetime="2026-05-21" class="refDate">21 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SPIFFE-ID">[SPIFFE-ID]</dt>
+      <dd>
+<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"SPIFFE ID Standards"</span>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md">https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SPIFFE-JWT-SVID">[SPIFFE-JWT-SVID]</dt>
+    <dd>
+<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"JWT-SVID Standards"</span>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md">https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<section id="section-9">
+      <h2 id="name-informative-references">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+      </h2>
+<dl class="references">
+<dt id="RFC7517">[RFC7517]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refTitle">"JSON Web Key (JWK)"</span>, <span class="seriesInfo">RFC 7517</span>, <span class="seriesInfo">DOI 10.17487/RFC7517</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7517">https://www.rfc-editor.org/info/rfc7517</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-spiffe-client-auth">[I-D.ietf-oauth-spiffe-client-auth]</dt>
+      <dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, <span class="refAuthor">Thorgersen, S.</span>, and <span class="refAuthor">N. Cam-Winget</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-02</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="OpenID.Core">[OpenID.Core]</dt>
+    <dd>
+<span class="refAuthor">Sakimura, N.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">de Medeiros, B.</span>, and <span class="refAuthor">C. Jayawardena</span>, <span class="refTitle">"OpenID Connect Core 1.0 incorporating errata set 1"</span>, <time datetime="2014-11" class="refDate">November 2014</time>, <span>&lt;<a href="https://openid.net/specs/openid-connect-core-1_0.html">https://openid.net/specs/openid-connect-core-1_0.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<div id="use-case">
+<section id="appendix-A">
+      <h2 id="name-complete-end-to-end-use-cas">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-complete-end-to-end-use-cas" class="section-name selfRef">Complete End-to-End Use Case: Multi-Hop Financial Research Agent Workflow</a>
+      </h2>
+<p id="appendix-A-1">To illustrate the practical application of this specification, this appendix provides a step-by-step walkthrough of a multi-hop AI agent workflow.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="scenario-overview">
+<section id="appendix-A.1">
+        <h3 id="name-scenario-overview">
+<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-scenario-overview" class="section-name selfRef">Scenario Overview</a>
+        </h3>
+<p id="appendix-A.1-1">An enterprise user (alice@enterprise.com) wants to generate a Q3 financial summary. The workflow involves the following entities:<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="appendix-A.1-2">
+          <li id="appendix-A.1-2.1">
+            <p id="appendix-A.1-2.1.1">User / Client App: Initiates the high-level request.<a href="#appendix-A.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.1-2.2">
+            <p id="appendix-A.1-2.2.1">Agent A (Research Coordinator, spiffe://cluster.local/ns/ai/sa/agent-researcher): Receives the user goal and delegates raw data retrieval.<a href="#appendix-A.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.1-2.3">
+            <p id="appendix-A.1-2.3.1">Agent B (Database Proxy Agent, spiffe://cluster.local/ns/ai/sa/agent-db-proxy): Receives the delegated task and delegates specific query execution to a specialized worker.<a href="#appendix-A.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.1-2.4">
+            <p id="appendix-A.1-2.4.1">Agent C (Financial DB Worker / MCP Server, spiffe://cluster.local/ns/ai/sa/agent-db-worker): Executes the underlying database query.<a href="#appendix-A.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.1-2.5">
+            <p id="appendix-A.1-2.5.1">Authorization Server (https://auth.enterprise.net): Manages identity validation, Token Exchange, and actor chain generation.<a href="#appendix-A.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="appendix-A.1-2.6">
+            <p id="appendix-A.1-2.6.1">Financial Database Resource Server (https://db.enterprise.net): Serves the report data.<a href="#appendix-A.1-2.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="protocol-flow">
+<section id="appendix-A.2">
+        <h3 id="name-step-by-step-protocol-flow">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-step-by-step-protocol-flow" class="section-name selfRef">Step-by-Step Protocol Flow</a>
+        </h3>
+<p id="appendix-A.2-1">Step 1 (Initial Authentication): Alice authenticates to the AS via OpenID Connect <a href="#OpenID.Core" class="internal xref">OpenID.Core</a>. Agent A requests its initial ID-JAG with the ID-JAG grant <a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="internal xref">draft-ietf-oauth-identity-assertion-authz-grant</a>, presenting Alice's ID Token as the identity assertion and requesting the scope "reports:read mail:send".<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-2">Step 2 (Hop 1, Agent A to Agent B): Agent A decides to delegate the data retrieval. It sends the Token Exchange request of <a href="#exchange-request" class="auto internal xref">Section 4.2</a> with subject_token set to its ID-JAG, actor_token set to its JWT-SVID, audience set to Agent B's SPIFFE ID, and scope set to reports:read. The AS validates the request as described in <a href="#as-processing" class="auto internal xref">Section 4.3</a> and issues the ID-JAG shown in the first example of <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>, with act recording Agent A and may_act naming Agent B. Agent A passes the ID-JAG to Agent B over the A2A transport.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-3">Step 3 (Hop 2, Agent B to Agent C): Agent B needs the specialized worker for the actual query. It presents the received ID-JAG as the subject_token and its own JWT-SVID as the actor_token, with audience set to Agent C's SPIFFE ID and scope set to reports:read:q3_only. The AS verifies that Agent B matches the may_act claim of the subject_token, checks the attenuation from reports:read to reports:read:q3_only, and issues the ID-JAG shown in the second example of <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>. Agent B passes it to Agent C.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-4">Step 4 (Final Exchange at Agent C): Agent C presents the received ID-JAG and its own JWT-SVID, requesting an Access Token for https://db.enterprise.net with scope reports:read:q3_only. The AS validates as before and issues an Access Token that carries the complete lineage:<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.2-5">
+<pre>
+{
+  "iss": "https://auth.enterprise.net",
+  "sub": "user_original_12345",
+  "aud": "https://db.enterprise.net",
+  "exp": 1776326950,
+  "iat": 1776326890,
+  "jti": "urn:uuid:1a2b-3c4d-5e6f-708192a3b4c5",
+  "scope": "reports:read:q3_only",
+  "act": {
+    "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-worker",
+    "act": {
+      "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy",
+      "act": {
+        "sub": "spiffe://cluster.local/ns/ai/sa/agent-researcher"
+      }
+    }
+  }
+}
+</pre><a href="#appendix-A.2-5" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.2-6">Step 5 (Execution): Agent C presents the Access Token to the Financial Database Resource Server. The Resource Server validates the audience and reads the act chain, achieving verifiable multi-hop provenance: User Alice -&gt; Agent-Researcher -&gt; Agent-DB-Proxy -&gt; Agent-DB-Worker.<a href="#appendix-A.2-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<section id="appendix-B">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-B-1">The authors thank Hongru Zhu, Hui Xue, and Suresh Krishnan for enlightening discussions.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Dapeng Liu</span></div>
+<div dir="auto" class="left"><span class="org">Alibaba Group</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:max.ldp@alibaba-inc.com" class="email">max.ldp@alibaba-inc.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Aaron Parecki</span></div>
+<div dir="auto" class="left"><span class="org">Okta</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:aaron@parecki.com" class="email">aaron@parecki.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
