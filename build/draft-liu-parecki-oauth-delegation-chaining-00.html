@@ -1501,11 +1501,11 @@ delegation lineage.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <p id="section-1-6">Every hop of the chain performs exactly one Token Exchange request.
-The AS is the only issuer of ID-JAGs in the chain, so privilege
-attenuation is enforced by the AS at every hop rather than merely
-asserted by the delegating entity, and the full lineage, e.g., User -&gt;
-Agent A -&gt; Agent B -&gt; Agent C, is carried in the act claim of the
-final Access Token.<a href="#section-1-6" class="pilcrow">¶</a></p>
+Each ID-JAG in the chain is issued by an Authorization Server rather
+than minted by the delegating entity, so privilege attenuation is
+enforced at every hop rather than merely asserted by the entity that
+delegates, and the full lineage, e.g., User -&gt; Agent A -&gt; Agent B -&gt;
+Agent C, is carried in the act claim of the final Access Token.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <p id="section-1-7">For hops where a round trip to the AS is not practical, for example
 across trust domains with no reachable common AS, this document also
 defines an optional variant based on self-issued Delegation
@@ -1628,7 +1628,8 @@ payload. Agent B now holds the delegated authorization and can either
 redeem it for an Access Token of a resource server or delegate
 further to Agent C in exactly the same way. Each hop of the chain
 therefore performs exactly one Token Exchange request, and every
-ID-JAG in the chain is issued by the same AS.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+ID-JAG is issued by an AS that has validated the ID-JAG presented at
+the hop before it.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <p id="section-4.1-4">The chain ends when the last workload exchanges the ID-JAG it holds
 for an Access Token of the resource server it needs to call. The
 Access Token carries the complete actor chain in its act claim,
@@ -1639,7 +1640,11 @@ own AS, the AS of the delegating entity issues the ID-JAG with the
 aud claim set to the issuer identifier of the target domain's AS, as
 described in <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>. The
 target entity redeems the ID-JAG there. The processing requirements
-of <a href="#as-processing" class="auto internal xref">Section 4.3</a> apply at whichever AS redeems the ID-JAG.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+of <a href="#as-processing" class="auto internal xref">Section 4.3</a> apply at whichever AS redeems the ID-JAG. The
+redeeming AS validates the signature of the ID-JAG against the
+signing key of the issuing AS identified by its iss claim, which it
+obtains through the inter-domain trust relationship between the two
+Authorization Servers.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="exchange-request">
@@ -1717,9 +1722,14 @@ otherwise.<a href="#section-4.3-2.2.1" class="pilcrow">¶</a></p>
 ID-JAG as required by
 <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, including
 signature, issuer, audience, expiration, not-before, and jti. The
-aud claim of the subject_token MUST identify the AS itself.
-Because the AS issued every ID-JAG in the chain, the signature of
-the subject_token also covers its act chain.<a href="#section-4.3-2.3.1" class="pilcrow">¶</a></p>
+aud claim of the subject_token MUST identify the AS itself. The AS
+MUST verify the signature of the subject_token against the signing
+key of the issuer identified by its iss claim. Where that issuer
+is the AS itself, this is its own key; where the subject_token was
+issued by an AS in another trust domain, see <a href="#chain-overview" class="auto internal xref">Section 4.1</a>,
+the AS obtains that key through the inter-domain trust
+relationship. Because the issuing AS signs the ID-JAG, that
+signature covers the act chain the ID-JAG carries.<a href="#section-4.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.3-2.4">
             <p id="section-4.3-2.4.1">Hop binding: If the subject_token contains a may_act claim, the AS
@@ -1733,11 +1743,17 @@ MUST apply its own policy to decide whether the current actor may
 delegate the subject_token further.<a href="#section-4.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.3-2.5">
-            <p id="section-4.3-2.5.1">Attenuation check: The requested scope and authorization_details
-<span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span> MUST be a subset of or equal to those of the
-subject_token. The AS MUST reject any request that would widen
-privileges, including requests that add actions, datatypes, or
-locations to an authorization_details object of the subject_token.
+            <p id="section-4.3-2.5.1">Attenuation check: The requested scope MUST be a subset of or
+equal to the scope of the subject_token, where scope is compared
+as a set of space-delimited values. A request that contains a
+scope value not present in the subject_token MUST be rejected.
+Fine-grained narrowing is carried in authorization_details
+<span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>. Whether a requested authorization_details object is
+no broader than the corresponding object of the subject_token is
+defined by that authorization_details type; this profile defines
+no generic comparison across types. Where the type defines no
+narrowing relation, or where the AS cannot decide that the
+requested object is no broader, the AS MUST reject the request.
 The AS MAY further narrow the granted scope and
 authorization_details based on policy.<a href="#section-4.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
@@ -1784,6 +1800,13 @@ where Agent A delegates to Agent B:<a href="#section-4.4-2" class="pilcrow">¶</
   "iat": 1776326740,
   "jti": "urn:uuid:8e41-4b72-9b2a-111122223333",
   "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-researcher"
   },
@@ -1795,7 +1818,8 @@ where Agent A delegates to Agent B:<a href="#section-4.4-2" class="pilcrow">¶</
 </div>
 <p id="section-4.4-4">The following is an example of the ID-JAG issued for the second hop,
 where Agent B delegates to Agent C. The act claim nests the actor
-chain, and the scope has been attenuated further:<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+chain, the scope is unchanged, and the authorization_details have
+been narrowed from all reports to the single Q3 report:<a href="#section-4.4-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-4.4-5">
 <pre>
 {
@@ -1806,7 +1830,14 @@ chain, and the scope has been attenuated further:<a href="#section-4.4-4" class=
   "exp": 1776326900,
   "iat": 1776326840,
   "jti": "urn:uuid:f901-2222-3333-444455556666",
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy",
     "act": {
@@ -1842,10 +1873,14 @@ issuance from the AS to the delegating entities themselves.<a href="#section-5-1
         <h3 id="name-applicability">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-applicability" class="section-name selfRef">Applicability</a>
         </h3>
-<p id="section-5.1-1">The self-issued variant applies when the delegating entity and the
-target entity operate in trust domains with no common reachable AS,
-or when the added latency of a synchronous exchange at every hop is
-unacceptable for the workload.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-1">The self-issued variant applies to intermediate hops downstream of an
+authorization that the AS issued, when the delegating entity and the
+target entity cannot reach a common AS synchronously, for example
+because they operate in trust domains with no reachable common AS, or
+because the added latency of a synchronous exchange at every hop is
+unacceptable for the workload. The end-user's root authorization
+always originates at the AS. The variant changes only how the hops
+after that root are bridged, not where the authority comes from.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <p id="section-5.1-2">The self-issued variant SHOULD NOT be used when the AS of the chain
 is reachable. Token Exchange gives the AS the opportunity to validate
 the actor and enforce attenuation at every hop. The self-issued
@@ -1859,14 +1894,19 @@ variant cannot provide those guarantees, see
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-assertion-format" class="section-name selfRef">Assertion Format</a>
         </h3>
 <p id="section-5.2-1">A Delegation Assertion (DA) is a JWT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>. A delegating
-entity, e.g., Agent A, MUST possess a valid authorization grant or
-active token representing the end-user (sub) before it issues a
-downstream Delegation Assertion.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2-2">Each Delegation Assertion MUST be signed using a private key
-cryptographically tied to the delegating entity's SPIFFE workload
-identity lifecycle. The AS validates the signature using the
-delegating entity's registered public key, retrieved via JWKS
-<span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> or trusted infrastructure metadata.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+entity, e.g., Agent A, MUST possess authority representing the
+end-user (sub) before it issues a downstream Delegation Assertion.
+That authority is either an authorization grant or active token
+issued by the AS, or an upstream Delegation Assertion whose chain of
+issuers roots at such a grant or token.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">Each Delegation Assertion MUST be signed with the private key of the
+delegating entity's SPIFFE workload identity, the same identity it
+proves with its JWT-SVID, see <a href="#workload-identity" class="auto internal xref">Section 3</a>. The redeeming
+AS validates the signature against the public key in the SPIFFE trust
+bundle of the issuer's trust domain. That trust bundle is distributed
+as a JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span>, so signature validation uses the same
+mechanism and the same trust anchors as validation of the JWT-SVID
+actor_token.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 <p id="section-5.2-3">A Delegation Assertion contains the following claims:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.2-4.1">
@@ -1906,7 +1946,7 @@ delegation_depth.<a href="#section-5.2-4.9.1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.2-6">
 <pre>
 {
-  "iss": "spiffe://cluster.local/ns/prod/sa/service-a",
+  "iss": "spiffe://cluster.local/ns/ai/sa/agent-a",
   "sub": "user_original_12345",
   "aud": "https://auth.enterprise.net/oauth/token",
   "exp": 1776326800,
@@ -1917,7 +1957,7 @@ delegation_depth.<a href="#section-5.2-4.9.1" class="pilcrow">¶</a></p>
     {
       "type": "api_access",
       "actions": ["GET"],
-      "locations": ["/api/v1/reports/q3.pdf"]
+      "locations": ["/api/v1/reports"]
     }
   ]
 }
@@ -1938,14 +1978,23 @@ rules:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.3-2">
 <li id="section-5.3-2.1">
             <p id="section-5.3-2.1.1">Monotonic Scope Attenuation Rule: The re-issued assertion's scope
-or authorization_details MUST be a subset of or equal to the
-permissions granted to the re-issuing entity. Privilege escalation
-is strictly prohibited.<a href="#section-5.3-2.1.1" class="pilcrow">¶</a></p>
+MUST be a subset of or equal to the scope granted to the
+re-issuing entity, compared as a set of space-delimited values,
+and its authorization_details MUST be no broader than those
+granted to the re-issuing entity, as defined by the applicable
+authorization_details type. Privilege escalation is prohibited.<a href="#section-5.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.3-2.2">
-            <p id="section-5.3-2.2.1">Actor Chain Nesting Rule: The re-issuing entity MUST append the
-upstream issuer's identity into an act claim structure within the
-assertion payload, preserving auditability.<a href="#section-5.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.3-2.2.1">Actor Chain Nesting Rule: In a Delegation Assertion the iss claim
+is the entity that issues it, which is the current actor of that
+hop, and the act claim carries the prior actors. The re-issuing
+entity MUST set the sub member of the act claim to the SPIFFE ID
+of the entity that issued the assertion it is re-issuing, that is,
+the iss of the upstream assertion, and MUST set the act member of
+the act claim to a copy of the act claim of the upstream
+assertion. Where the upstream assertion carries no act claim, the
+act member is omitted. The lineage therefore grows by one level at
+each hop.<a href="#section-5.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.3-2.3">
             <p id="section-5.3-2.3.1">Audience Re-Binding Rule: The re-issuing entity MUST update the
@@ -1954,7 +2003,9 @@ resource boundary.<a href="#section-5.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-5.3-3">The following is an example of a re-issued assertion for the hop
-Agent B to Agent C:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+Agent B to Agent C. Agent B sets iss to its own SPIFFE ID, records
+the upstream issuer Agent A as the sole prior actor in act, keeps the
+scope, and narrows the authorization_details to the single Q3 report:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.3-4">
 <pre>
 {
@@ -1967,7 +2018,14 @@ Agent B to Agent C:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-a"
   },
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "agent_context": {
     "task_id": "task-q3-summary-001",
     "delegation_depth": 2
@@ -1988,30 +2046,46 @@ request of <a href="#exchange-request" class="auto internal xref">Section 4.2</a
 the subject_token, subject_token_type set to
 urn:ietf:params:oauth:token-type:jwt, and the target entity's
 JWT-SVID as the actor_token. The AS validates the Delegation
-Assertion signature via the delegating entity's public keys, checks
-exp, nbf, and jti, verifies the act chain lineage, and applies the
-attenuation and policy checks of <a href="#as-processing" class="auto internal xref">Section 4.3</a> before issuing an
-Access Token.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
-<p id="section-5.4-2">This variant has weaker guarantees than the primary mechanism, and
-implementers need to understand them:<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+Assertion signature against the SPIFFE trust bundle of the issuer's
+trust domain, see <a href="#self-issued-format" class="auto internal xref">Section 5.2</a>, checks exp, nbf, and jti,
+verifies the act chain lineage, and applies the attenuation and
+policy checks of <a href="#as-processing" class="auto internal xref">Section 4.3</a> before issuing an Access Token.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.4-2">A Delegation Assertion and the ID-JAG of the primary mechanism carry
+the actor chain in mirror image. In the ID-JAG the AS is the issuer
+and the act claim carries the current actor together with its
+predecessors. In the Delegation Assertion the delegating entity is
+the issuer, so iss is the current actor and act carries only the
+prior actors. When the AS redeems a Delegation Assertion for an
+Access Token, it MUST build the act claim of the Access Token with
+the redeeming entity, identified by the sub claim of its JWT-SVID
+actor_token, as the outermost actor, nesting the iss of the
+Delegation Assertion, and nesting inside that the act claim of the
+Delegation Assertion. The Access Token then carries the full lineage
+in the same outermost-is-current-actor form used throughout this
+specification.<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+<p id="section-5.4-3">This variant has weaker guarantees than the primary mechanism, and
+implementers need to understand them:<a href="#section-5.4-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5.4-3.1">
-            <p id="section-5.4-3.1.1">The root authorization of the end-user is asserted by the first
-delegating entity, not issued by the AS. The AS SHOULD corroborate
-it, for example by requiring the end-user's token alongside the
-Delegation Assertion at redemption.<a href="#section-5.4-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-5.4-4.1">
+            <p id="section-5.4-4.1.1">Although the end-user's root authorization originates at the AS,
+see <a href="#self-issued-applicability" class="auto internal xref">Section 5.1</a>, the Delegation Assertion that
+reaches the AS at redemption is self-issued and the AS did not
+issue it. The AS cannot tell from the assertion alone whether its
+chain of issuers truly roots at a grant the AS issued. The AS
+SHOULD corroborate this, for example by requiring the end-user's
+token alongside the Delegation Assertion at redemption.<a href="#section-5.4-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.4-3.2">
-            <p id="section-5.4-3.2.1">Attenuation performed by intermediate entities is not independently
+          <li class="normal" id="section-5.4-4.2">
+            <p id="section-5.4-4.2.1">Attenuation performed by intermediate entities is not independently
 verifiable. The AS trusts the signatures of the self-issued
 assertions and applies its own policy, but a compromised
-intermediate can misstate the privileges it inherited.<a href="#section-5.4-3.2.1" class="pilcrow">¶</a></p>
+intermediate can misstate the privileges it inherited.<a href="#section-5.4-4.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-5.4-3.3">
-            <p id="section-5.4-3.3.1">A Delegation Assertion does not name the entity entitled to present
+          <li class="normal" id="section-5.4-4.3">
+            <p id="section-5.4-4.3.1">A Delegation Assertion does not name the entity entitled to present
 it. Presenters are authenticated, but any holder can attempt
 redemption. Short lifetimes and policy restrictions limit this
-exposure but do not remove it.<a href="#section-5.4-3.3.1" class="pilcrow">¶</a></p>
+exposure but do not remove it.<a href="#section-5.4-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2241,16 +2315,19 @@ A2A transport.<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
 <p id="appendix-A.2-3">Step 3 (Hop 2, Agent B to Agent C): Agent B needs the specialized
 worker for the actual query. It presents the received ID-JAG as the
 subject_token and its own JWT-SVID as the actor_token, with audience
-set to Agent C's SPIFFE ID and scope set to reports:read:q3_only.
-The AS verifies that Agent B matches the may_act claim of the
-subject_token, checks the attenuation from reports:read to
-reports:read:q3_only, and issues the ID-JAG shown in the second
-example of <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>. Agent B passes it to Agent C.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+set to Agent C's SPIFFE ID, scope set to reports:read, and
+authorization_details narrowing access to the single Q3 report at
+/api/v1/reports/q3.pdf. The AS verifies that Agent B matches the
+may_act claim of the subject_token, confirms that the requested scope
+is unchanged and that the narrowed authorization_details are no
+broader than those of the subject_token, and issues the ID-JAG shown
+in the second example of <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>. Agent B passes it to
+Agent C.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
 <p id="appendix-A.2-4">Step 4 (Final Exchange at Agent C): Agent C presents the received
 ID-JAG and its own JWT-SVID, requesting an Access Token for
-https://db.enterprise.net with scope reports:read:q3_only. The AS
-validates as before and issues an Access Token that carries the
-complete lineage:<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
+https://db.enterprise.net with scope reports:read and the same
+narrowed authorization_details. The AS validates as before and issues
+an Access Token that carries the complete lineage:<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.2-5">
 <pre>
 {
@@ -2260,7 +2337,14 @@ complete lineage:<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
   "exp": 1776326950,
   "iat": 1776326890,
   "jti": "urn:uuid:1a2b-3c4d-5e6f-708192a3b4c5",
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-worker",
     "act": {
