@@ -136,11 +136,11 @@ mechanism combines:
    delegation lineage.
 
 Every hop of the chain performs exactly one Token Exchange request.
-The AS is the only issuer of ID-JAGs in the chain, so privilege
-attenuation is enforced by the AS at every hop rather than merely
-asserted by the delegating entity, and the full lineage, e.g., User ->
-Agent A -> Agent B -> Agent C, is carried in the act claim of the
-final Access Token.
+Each ID-JAG in the chain is issued by an Authorization Server rather
+than minted by the delegating entity, so privilege attenuation is
+enforced at every hop rather than merely asserted by the entity that
+delegates, and the full lineage, e.g., User -> Agent A -> Agent B ->
+Agent C, is carried in the act claim of the final Access Token.
 
 For hops where a round trip to the AS is not practical, for example
 across trust domains with no reachable common AS, this document also
@@ -245,7 +245,8 @@ payload. Agent B now holds the delegated authorization and can either
 redeem it for an Access Token of a resource server or delegate
 further to Agent C in exactly the same way. Each hop of the chain
 therefore performs exactly one Token Exchange request, and every
-ID-JAG in the chain is issued by the same AS.
+ID-JAG is issued by an AS that has validated the ID-JAG presented at
+the hop before it.
 
 The chain ends when the last workload exchanges the ID-JAG it holds
 for an Access Token of the resource server it needs to call. The
@@ -258,7 +259,11 @@ own AS, the AS of the delegating entity issues the ID-JAG with the
 aud claim set to the issuer identifier of the target domain's AS, as
 described in {{!I-D.ietf-oauth-identity-assertion-authz-grant}}. The
 target entity redeems the ID-JAG there. The processing requirements
-of [](#as-processing) apply at whichever AS redeems the ID-JAG.
+of [](#as-processing) apply at whichever AS redeems the ID-JAG. The
+redeeming AS validates the signature of the ID-JAG against the
+signing key of the issuing AS identified by its iss claim, which it
+obtains through the inter-domain trust relationship between the two
+Authorization Servers.
 
 ## Token Exchange Request {#exchange-request}
 
@@ -326,9 +331,14 @@ leaves open, and they apply at every hop of the chain:
    ID-JAG as required by
    {{!I-D.ietf-oauth-identity-assertion-authz-grant}}, including
    signature, issuer, audience, expiration, not-before, and jti. The
-   aud claim of the subject_token MUST identify the AS itself.
-   Because the AS issued every ID-JAG in the chain, the signature of
-   the subject_token also covers its act chain.
+   aud claim of the subject_token MUST identify the AS itself. The AS
+   MUST verify the signature of the subject_token against the signing
+   key of the issuer identified by its iss claim. Where that issuer
+   is the AS itself, this is its own key; where the subject_token was
+   issued by an AS in another trust domain, see [](#chain-overview),
+   the AS obtains that key through the inter-domain trust
+   relationship. Because the issuing AS signs the ID-JAG, that
+   signature covers the act chain the ID-JAG carries.
 4. Hop binding: If the subject_token contains a may_act claim, the AS
    MUST verify that the sub member of may_act equals the SPIFFE ID
    of the actor_token, and MUST reject the request otherwise. This
@@ -338,11 +348,17 @@ leaves open, and they apply at every hop of the chain:
    target. If the subject_token contains no may_act claim, the AS
    MUST apply its own policy to decide whether the current actor may
    delegate the subject_token further.
-5. Attenuation check: The requested scope and authorization_details
-   {{!RFC9396}} MUST be a subset of or equal to those of the
-   subject_token. The AS MUST reject any request that would widen
-   privileges, including requests that add actions, datatypes, or
-   locations to an authorization_details object of the subject_token.
+5. Attenuation check: The requested scope MUST be a subset of or
+   equal to the scope of the subject_token, where scope is compared
+   as a set of space-delimited values. A request that contains a
+   scope value not present in the subject_token MUST be rejected.
+   Fine-grained narrowing is carried in authorization_details
+   {{!RFC9396}}. Whether a requested authorization_details object is
+   no broader than the corresponding object of the subject_token is
+   defined by that authorization_details type; this profile defines
+   no generic comparison across types. Where the type defines no
+   narrowing relation, or where the AS cannot decide that the
+   requested object is no broader, the AS MUST reject the request.
    The AS MAY further narrow the granted scope and
    authorization_details based on policy.
 6. Delegation policy: The AS MUST apply its delegation policy,
@@ -381,6 +397,13 @@ where Agent A delegates to Agent B:
   "iat": 1776326740,
   "jti": "urn:uuid:8e41-4b72-9b2a-111122223333",
   "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-researcher"
   },
@@ -392,7 +415,8 @@ where Agent A delegates to Agent B:
 
 The following is an example of the ID-JAG issued for the second hop,
 where Agent B delegates to Agent C. The act claim nests the actor
-chain, and the scope has been attenuated further:
+chain, the scope is unchanged, and the authorization_details have
+been narrowed from all reports to the single Q3 report:
 
 ~~~ json
 {
@@ -403,7 +427,14 @@ chain, and the scope has been attenuated further:
   "exp": 1776326900,
   "iat": 1776326840,
   "jti": "urn:uuid:f901-2222-3333-444455556666",
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-proxy",
     "act": {
@@ -431,10 +462,14 @@ issuance from the AS to the delegating entities themselves.
 
 ## Applicability {#self-issued-applicability}
 
-The self-issued variant applies when the delegating entity and the
-target entity operate in trust domains with no common reachable AS,
-or when the added latency of a synchronous exchange at every hop is
-unacceptable for the workload.
+The self-issued variant applies to intermediate hops downstream of an
+authorization that the AS issued, when the delegating entity and the
+target entity cannot reach a common AS synchronously, for example
+because they operate in trust domains with no reachable common AS, or
+because the added latency of a synchronous exchange at every hop is
+unacceptable for the workload. The end-user's root authorization
+always originates at the AS. The variant changes only how the hops
+after that root are bridged, not where the authority comes from.
 
 The self-issued variant SHOULD NOT be used when the AS of the chain
 is reachable. Token Exchange gives the AS the opportunity to validate
@@ -445,15 +480,20 @@ variant cannot provide those guarantees, see
 ## Assertion Format {#self-issued-format}
 
 A Delegation Assertion (DA) is a JWT {{!RFC7519}}. A delegating
-entity, e.g., Agent A, MUST possess a valid authorization grant or
-active token representing the end-user (sub) before it issues a
-downstream Delegation Assertion.
+entity, e.g., Agent A, MUST possess authority representing the
+end-user (sub) before it issues a downstream Delegation Assertion.
+That authority is either an authorization grant or active token
+issued by the AS, or an upstream Delegation Assertion whose chain of
+issuers roots at such a grant or token.
 
-Each Delegation Assertion MUST be signed using a private key
-cryptographically tied to the delegating entity's SPIFFE workload
-identity lifecycle. The AS validates the signature using the
-delegating entity's registered public key, retrieved via JWKS
-{{?RFC7517}} or trusted infrastructure metadata.
+Each Delegation Assertion MUST be signed with the private key of the
+delegating entity's SPIFFE workload identity, the same identity it
+proves with its JWT-SVID, see [](#workload-identity). The redeeming
+AS validates the signature against the public key in the SPIFFE trust
+bundle of the issuer's trust domain. That trust bundle is distributed
+as a JWK Set {{?RFC7517}}, so signature validation uses the same
+mechanism and the same trust anchors as validation of the JWT-SVID
+actor_token.
 
 A Delegation Assertion contains the following claims:
 
@@ -476,7 +516,7 @@ The following is an example of an initial-hop Delegation Assertion:
 
 ~~~ json
 {
-  "iss": "spiffe://cluster.local/ns/prod/sa/service-a",
+  "iss": "spiffe://cluster.local/ns/ai/sa/agent-a",
   "sub": "user_original_12345",
   "aud": "https://auth.enterprise.net/oauth/token",
   "exp": 1776326800,
@@ -487,7 +527,7 @@ The following is an example of an initial-hop Delegation Assertion:
     {
       "type": "api_access",
       "actions": ["GET"],
-      "locations": ["/api/v1/reports/q3.pdf"]
+      "locations": ["/api/v1/reports"]
     }
   ]
 }
@@ -502,18 +542,29 @@ self-issues a new downstream Delegation Assertion following three
 rules:
 
 1. Monotonic Scope Attenuation Rule: The re-issued assertion's scope
-   or authorization_details MUST be a subset of or equal to the
-   permissions granted to the re-issuing entity. Privilege escalation
-   is strictly prohibited.
-2. Actor Chain Nesting Rule: The re-issuing entity MUST append the
-   upstream issuer's identity into an act claim structure within the
-   assertion payload, preserving auditability.
+   MUST be a subset of or equal to the scope granted to the
+   re-issuing entity, compared as a set of space-delimited values,
+   and its authorization_details MUST be no broader than those
+   granted to the re-issuing entity, as defined by the applicable
+   authorization_details type. Privilege escalation is prohibited.
+2. Actor Chain Nesting Rule: In a Delegation Assertion the iss claim
+   is the entity that issues it, which is the current actor of that
+   hop, and the act claim carries the prior actors. The re-issuing
+   entity MUST set the sub member of the act claim to the SPIFFE ID
+   of the entity that issued the assertion it is re-issuing, that is,
+   the iss of the upstream assertion, and MUST set the act member of
+   the act claim to a copy of the act claim of the upstream
+   assertion. Where the upstream assertion carries no act claim, the
+   act member is omitted. The lineage therefore grows by one level at
+   each hop.
 3. Audience Re-Binding Rule: The re-issuing entity MUST update the
    aud claim to target the token endpoint of the downstream AS or
    resource boundary.
 
 The following is an example of a re-issued assertion for the hop
-Agent B to Agent C:
+Agent B to Agent C. Agent B sets iss to its own SPIFFE ID, records
+the upstream issuer Agent A as the sole prior actor in act, keeps the
+scope, and narrows the authorization_details to the single Q3 report:
 
 ~~~ json
 {
@@ -526,7 +577,14 @@ Agent B to Agent C:
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-a"
   },
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "agent_context": {
     "task_id": "task-q3-summary-001",
     "delegation_depth": 2
@@ -542,18 +600,35 @@ request of [](#exchange-request), with the Delegation Assertion as
 the subject_token, subject_token_type set to
 urn:ietf:params:oauth:token-type:jwt, and the target entity's
 JWT-SVID as the actor_token. The AS validates the Delegation
-Assertion signature via the delegating entity's public keys, checks
-exp, nbf, and jti, verifies the act chain lineage, and applies the
-attenuation and policy checks of [](#as-processing) before issuing an
-Access Token.
+Assertion signature against the SPIFFE trust bundle of the issuer's
+trust domain, see [](#self-issued-format), checks exp, nbf, and jti,
+verifies the act chain lineage, and applies the attenuation and
+policy checks of [](#as-processing) before issuing an Access Token.
+
+A Delegation Assertion and the ID-JAG of the primary mechanism carry
+the actor chain in mirror image. In the ID-JAG the AS is the issuer
+and the act claim carries the current actor together with its
+predecessors. In the Delegation Assertion the delegating entity is
+the issuer, so iss is the current actor and act carries only the
+prior actors. When the AS redeems a Delegation Assertion for an
+Access Token, it MUST build the act claim of the Access Token with
+the redeeming entity, identified by the sub claim of its JWT-SVID
+actor_token, as the outermost actor, nesting the iss of the
+Delegation Assertion, and nesting inside that the act claim of the
+Delegation Assertion. The Access Token then carries the full lineage
+in the same outermost-is-current-actor form used throughout this
+specification.
 
 This variant has weaker guarantees than the primary mechanism, and
 implementers need to understand them:
 
-* The root authorization of the end-user is asserted by the first
-  delegating entity, not issued by the AS. The AS SHOULD corroborate
-  it, for example by requiring the end-user's token alongside the
-  Delegation Assertion at redemption.
+* Although the end-user's root authorization originates at the AS,
+  see [](#self-issued-applicability), the Delegation Assertion that
+  reaches the AS at redemption is self-issued and the AS did not
+  issue it. The AS cannot tell from the assertion alone whether its
+  chain of issuers truly roots at a grant the AS issued. The AS
+  SHOULD corroborate this, for example by requiring the end-user's
+  token alongside the Delegation Assertion at redemption.
 * Attenuation performed by intermediate entities is not independently
   verifiable. The AS trusts the signatures of the self-issued
   assertions and applies its own policy, but a compromised
@@ -667,17 +742,20 @@ A2A transport.
 Step 3 (Hop 2, Agent B to Agent C): Agent B needs the specialized
 worker for the actual query. It presents the received ID-JAG as the
 subject_token and its own JWT-SVID as the actor_token, with audience
-set to Agent C's SPIFFE ID and scope set to reports:read:q3_only.
-The AS verifies that Agent B matches the may_act claim of the
-subject_token, checks the attenuation from reports:read to
-reports:read:q3_only, and issues the ID-JAG shown in the second
-example of [](#issued-id-jag). Agent B passes it to Agent C.
+set to Agent C's SPIFFE ID, scope set to reports:read, and
+authorization_details narrowing access to the single Q3 report at
+/api/v1/reports/q3.pdf. The AS verifies that Agent B matches the
+may_act claim of the subject_token, confirms that the requested scope
+is unchanged and that the narrowed authorization_details are no
+broader than those of the subject_token, and issues the ID-JAG shown
+in the second example of [](#issued-id-jag). Agent B passes it to
+Agent C.
 
 Step 4 (Final Exchange at Agent C): Agent C presents the received
 ID-JAG and its own JWT-SVID, requesting an Access Token for
-https://db.enterprise.net with scope reports:read:q3_only. The AS
-validates as before and issues an Access Token that carries the
-complete lineage:
+https://db.enterprise.net with scope reports:read and the same
+narrowed authorization_details. The AS validates as before and issues
+an Access Token that carries the complete lineage:
 
 ~~~ json
 {
@@ -687,7 +765,14 @@ complete lineage:
   "exp": 1776326950,
   "iat": 1776326890,
   "jti": "urn:uuid:1a2b-3c4d-5e6f-708192a3b4c5",
-  "scope": "reports:read:q3_only",
+  "scope": "reports:read",
+  "authorization_details": [
+    {
+      "type": "api_access",
+      "actions": ["GET"],
+      "locations": ["/api/v1/reports/q3.pdf"]
+    }
+  ],
   "act": {
     "sub": "spiffe://cluster.local/ns/ai/sa/agent-db-worker",
     "act": {
