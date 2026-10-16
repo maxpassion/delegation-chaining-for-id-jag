@@ -13,8 +13,7 @@ identities as the actor.
 ## Layout
 
 - [draft-liu-parecki-oauth-delegation-chaining-00.md](draft-liu-parecki-oauth-delegation-chaining-00.md)
-  is the source of truth, written in the [kramdown-rfc](https://github.com/cabo/kramdown-rfc)
-  dialect of Markdown.
+  is the source.
 - `build/` holds the generated RFC XML v3, HTML, and text renditions, rebuilt
   automatically on every Markdown change by GitHub Actions.
 
