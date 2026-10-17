@@ -78,31 +78,31 @@ Table of Contents
    2.  Terminology and Architecture Overview . . . . . . . . . . . .   4
    3.  Workload Identity of the Actor  . . . . . . . . . . . . . . .   5
    4.  Delegation Chaining with Token Exchange . . . . . . . . . . .   5
-     4.1.  Overview  . . . . . . . . . . . . . . . . . . . . . . . .   5
-     4.2.  Token Exchange Request  . . . . . . . . . . . . . . . . .   6
-     4.3.  Authorization Server Processing Requirements  . . . . . .   7
+     4.1.  Overview  . . . . . . . . . . . . . . . . . . . . . . . .   6
+     4.2.  Token Exchange Request  . . . . . . . . . . . . . . . . .   7
+     4.3.  Authorization Server Processing Requirements  . . . . . .   8
      4.4.  The Issued ID-JAG . . . . . . . . . . . . . . . . . . . .   9
-   5.  Optional Variant: Self-Issued Delegation Assertions . . . . .  10
-     5.1.  Applicability . . . . . . . . . . . . . . . . . . . . . .  10
-     5.2.  Assertion Format  . . . . . . . . . . . . . . . . . . . .  11
-     5.3.  Re-Issuance Rules . . . . . . . . . . . . . . . . . . . .  12
-     5.4.  Redemption at the Authorization Server  . . . . . . . . .  13
-   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
-     6.1.  Audience and Hop Binding  . . . . . . . . . . . . . . . .  14
-     6.2.  Monotonic Attenuation . . . . . . . . . . . . . . . . . .  15
-     6.3.  Replay Prevention . . . . . . . . . . . . . . . . . . . .  15
-     6.4.  Transport and Confidentiality . . . . . . . . . . . . . .  15
-     6.5.  Workload Identity Compromise  . . . . . . . . . . . . . .  15
-   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  15
-   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  15
-     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  15
-     8.2.  Informative References  . . . . . . . . . . . . . . . . .  16
+   5.  Optional Variant: Self-Issued Delegation Assertions . . . . .  11
+     5.1.  Applicability . . . . . . . . . . . . . . . . . . . . . .  11
+     5.2.  Assertion Format  . . . . . . . . . . . . . . . . . . . .  12
+     5.3.  Re-Issuance Rules . . . . . . . . . . . . . . . . . . . .  13
+     5.4.  Redemption at the Authorization Server  . . . . . . . . .  15
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  16
+     6.1.  Audience and Hop Binding  . . . . . . . . . . . . . . . .  16
+     6.2.  Monotonic Attenuation . . . . . . . . . . . . . . . . . .  16
+     6.3.  Replay Prevention . . . . . . . . . . . . . . . . . . . .  16
+     6.4.  Transport and Confidentiality . . . . . . . . . . . . . .  16
+     6.5.  Workload Identity Compromise  . . . . . . . . . . . . . .  16
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  17
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  17
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  17
+     8.2.  Informative References  . . . . . . . . . . . . . . . . .  18
    Appendix A.  Complete End-to-End Use Case: Multi-Hop Financial
-           Research Agent Workflow . . . . . . . . . . . . . . . . .  17
-     A.1.  Scenario Overview . . . . . . . . . . . . . . . . . . . .  17
-     A.2.  Step-by-Step Protocol Flow  . . . . . . . . . . . . . . .  18
-   Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . .  19
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  19
+           Research Agent Workflow . . . . . . . . . . . . . . . . .  18
+     A.1.  Scenario Overview . . . . . . . . . . . . . . . . . . . .  18
+     A.2.  Step-by-Step Protocol Flow  . . . . . . . . . . . . . . .  19
+   Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . .  20
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  20
 
 
 
@@ -244,8 +244,19 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    The workload proves this identity with a JWT-SVID, a JWT whose sub
    claim carries the SPIFFE ID and which is signed by the SPIRE server
    of the trust domain.  Verifying a JWT-SVID requires the SPIFFE trust
-   bundle of that trust domain.  JWT-SVIDs are short-lived by design
+   bundle of that trust domain, whose JWT authorities are published as a
+   JWK Set [RFC7517].  JWT-SVIDs are short-lived by design
    [SPIFFE-JWT-SVID].
+
+   SPIFFE defines a second credential form for the same identity, the
+   X.509-SVID [SPIFFE-X509-SVID], which is a certificate for a key pair
+   that the workload itself holds.  The difference between the two forms
+   matters for this specification.  A JWT-SVID is signed by the SPIRE
+   server, so the workload carries it but cannot produce new signed
+   material with it.  An X.509-SVID gives the workload a private key it
+   can sign with.  The primary mechanism presents a JWT-SVID as the
+   actor_token.  The self-issued variant of Section 5 signs its
+   Delegation Assertions with the X.509-SVID private key.
 
    In this profile, the JWT-SVID of the delegating entity is presented
    as the actor_token of the Token Exchange request described in
@@ -258,6 +269,18 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    with some other mechanism.
 
 4.  Delegation Chaining with Token Exchange
+
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                 [Page 5]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
 
 4.1.  Overview
 
@@ -274,14 +297,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    the ID-JAG Agent A holds, actor_token is Agent A's JWT-SVID, and
    audience names Agent B.  The AS validates the request as described in
    Section 4.3 and issues a new ID-JAG.  The subject remains the end-
-
-
-
-Liu & Parecki             Expires 18 April 2027                 [Page 5]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
    user, the act claim records Agent A as the current actor, and the
    may_act claim names Agent B as the entity entitled to redeem the new
    ID-JAG.
@@ -312,6 +327,17 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    obtains through the inter-domain trust relationship between the two
    Authorization Servers.
 
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                 [Page 6]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
 4.2.  Token Exchange Request
 
    Each hop of the chain is one Token Exchange request to the token
@@ -326,18 +352,19 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    requested_token_type=urn:ietf:params:oauth:token-type:id-jag
    audience=(the SPIFFE ID or resource URI of the target entity)
    scope=(no wider than the scope of the subject_token)
+   authorization_details=(no broader than those of the subject_token)
+
+   The scope and authorization_details [RFC9396] parameters together
+   express the privileges requested for the next hop.  Both MUST be no
+   broader than the corresponding values of the subject_token, as the
+   attenuation check of Section 4.3 requires.  The authorization_details
+   parameter carries the fine-grained narrowing, for example restricting
+   access to a single resource, and is encoded as specified in
+   [RFC9396].
 
    The audience parameter names the target entity of the delegation,
    e.g., its SPIFFE ID.  The aud claim of the issued ID-JAG continues to
    identify the AS that redeems it, as required by
-
-
-
-Liu & Parecki             Expires 18 April 2027                 [Page 6]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
    [I-D.ietf-oauth-identity-assertion-authz-grant].  The AS records the
    target entity in the may_act claim of the issued ID-JAG instead,
    which binds the ID-JAG to the entity entitled to redeem it in the
@@ -357,6 +384,15 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    response to every exchange follows Section 2.2.1 of [RFC8693].  For
    an ID-JAG, the ID-JAG is returned in the access_token parameter and
    token_type is set to N_A.
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                 [Page 7]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
 
 4.3.  Authorization Server Processing Requirements
 
@@ -386,14 +422,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
        signature, issuer, audience, expiration, not-before, and jti.
        The aud claim of the subject_token MUST identify the AS itself.
        The AS MUST verify the signature of the subject_token against the
-
-
-
-Liu & Parecki             Expires 18 April 2027                 [Page 7]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
        signing key of the issuer identified by its iss claim.  Where
        that issuer is the AS itself, this is its own key; where the
        subject_token was issued by an AS in another trust domain, see
@@ -414,6 +442,14 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    5.  Attenuation check: The requested scope MUST be a subset of or
        equal to the scope of the subject_token, where scope is compared
        as a set of space-delimited values.  A request that contains a
+
+
+
+Liu & Parecki             Expires 18 April 2027                 [Page 8]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
        scope value not present in the subject_token MUST be rejected.
        Fine-grained narrowing is carried in authorization_details
        [RFC9396].  Whether a requested authorization_details object is
@@ -438,18 +474,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
        SHOULD be short, and the jti value MUST be unique among all
        tokens issued by the AS.
 
-
-
-
-
-
-
-
-Liu & Parecki             Expires 18 April 2027                 [Page 8]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
 4.4.  The Issued ID-JAG
 
    The issued ID-JAG carries the end-user as its subject, the attenuated
@@ -463,6 +487,24 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
 
    The following is an example of the ID-JAG issued for the first hop,
    where Agent A delegates to Agent B:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                 [Page 9]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
 
    {
      "iss": "https://auth.enterprise.net",
@@ -501,7 +543,21 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
 
 
 
-Liu & Parecki             Expires 18 April 2027                 [Page 9]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 10]
 
 Internet-Draft       Delegation Chaining for ID-JAG         October 2026
 
@@ -557,7 +613,7 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
 
 
 
-Liu & Parecki             Expires 18 April 2027                [Page 10]
+Liu & Parecki             Expires 18 April 2027                [Page 11]
 
 Internet-Draft       Delegation Chaining for ID-JAG         October 2026
 
@@ -579,12 +635,17 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    a grant or token.
 
    Each Delegation Assertion MUST be signed with the private key of the
-   delegating entity's SPIFFE workload identity, the same identity it
-   proves with its JWT-SVID, see Section 3.  The redeeming AS validates
-   the signature against the public key in the SPIFFE trust bundle of
-   the issuer's trust domain.  That trust bundle is distributed as a JWK
-   Set [RFC7517], so signature validation uses the same mechanism and
-   the same trust anchors as validation of the JWT-SVID actor_token.
+   delegating entity's X.509-SVID, see Section 3.  A JWT-SVID cannot
+   serve this purpose, because it is signed by the SPIRE server and the
+   workload does not hold that signing key.
+
+   The Delegation Assertion is a JWS and MUST carry the signing
+   X.509-SVID so that the AS can validate it, for example in the x5c
+   header parameter [RFC7515].  The redeeming AS validates the signature
+   by checking that this X.509-SVID chains to a certificate authority in
+   the SPIFFE trust bundle of the issuer's trust domain, and that the
+   SPIFFE ID carried in the X.509-SVID equals the iss claim of the
+   Delegation Assertion.
 
    A Delegation Assertion contains the following claims:
 
@@ -606,17 +667,17 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    *  authorization_details: optional fine-grained authorization details
       via [RFC9396], e.g., access to specific API paths or MCP tools.
 
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 12]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    *  act: nested actor identities, see Section 5.3.
 
    *  agent_context: optional agentic context, e.g., task_id, goal, and
       delegation_depth.
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 11]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
 
    The following is an example of an initial-hop Delegation Assertion:
 
@@ -652,6 +713,23 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
        to the re-issuing entity, as defined by the applicable
        authorization_details type.  Privilege escalation is prohibited.
 
+
+
+
+
+
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 13]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    2.  Actor Chain Nesting Rule: In a Delegation Assertion the iss claim
        is the entity that issues it, which is the current actor of that
        hop, and the act claim carries the prior actors.  The re-issuing
@@ -666,13 +744,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    3.  Audience Re-Binding Rule: The re-issuing entity MUST update the
        aud claim to target the token endpoint of the downstream AS or
        resource boundary.
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 12]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
 
    The following is an example of a re-issued assertion for the hop
    Agent B to Agent C.  Agent B sets iss to its own SPIFFE ID, records
@@ -703,6 +774,18 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
      }
    }
 
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 14]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
 5.4.  Redemption at the Authorization Server
 
    A target entity that received a Delegation Assertion redeems it at
@@ -710,11 +793,11 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    request of Section 4.2, with the Delegation Assertion as the
    subject_token, subject_token_type set to urn:ietf:params:oauth:token-
    type:jwt, and the target entity's JWT-SVID as the actor_token.  The
-   AS validates the Delegation Assertion signature against the SPIFFE
-   trust bundle of the issuer's trust domain, see Section 5.2, checks
-   exp, nbf, and jti, verifies the act chain lineage, and applies the
-   attenuation and policy checks of Section 4.3 before issuing an Access
-   Token.
+   AS validates the Delegation Assertion signature by chaining its
+   X.509-SVID to the SPIFFE trust bundle of the issuer's trust domain,
+   see Section 5.2, checks exp, nbf, and jti, verifies the act chain
+   lineage, and applies the attenuation and policy checks of Section 4.3
+   before issuing an Access Token.
 
    A Delegation Assertion and the ID-JAG of the primary mechanism carry
    the actor chain in mirror image.  In the ID-JAG the AS is the issuer
@@ -722,14 +805,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    predecessors.  In the Delegation Assertion the delegating entity is
    the issuer, so iss is the current actor and act carries only the
    prior actors.  When the AS redeems a Delegation Assertion for an
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 13]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
    Access Token, it MUST build the act claim of the Access Token with
    the redeeming entity, identified by the sub claim of its JWT-SVID
    actor_token, as the outermost actor, nesting the iss of the
@@ -759,6 +834,14 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
       attempt redemption.  Short lifetimes and policy restrictions limit
       this exposure but do not remove it.
 
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 15]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
 6.  Security Considerations
 
 6.1.  Audience and Hop Binding
@@ -773,18 +856,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    For self-issued Delegation Assertions, the aud claim MUST be strictly
    locked to the token endpoint of the AS to prevent cross-service
    injection or replay.
-
-
-
-
-
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 14]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
 
 6.2.  Monotonic Attenuation
 
@@ -819,6 +890,14 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    upstream, but AS policy SHOULD also cap the total delegation depth
    and the privileges available to each hop.
 
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 16]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
 7.  IANA Considerations
 
    This document has no IANA actions.
@@ -835,13 +914,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
               <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
               identity-assertion-authz-grant-04>.
 
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 15]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -850,6 +922,10 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
    [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
               <https://www.rfc-editor.org/rfc/rfc6749>.
+
+   [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
+              Signature (JWS)", RFC 7515, DOI 10.17487/RFC7515, May
+              2015, <https://www.rfc-editor.org/rfc/rfc7515>.
 
    [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
               (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
@@ -869,6 +945,15 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
               DOI 10.17487/RFC9396, May 2023,
               <https://www.rfc-editor.org/rfc/rfc9396>.
 
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 17]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    [SPIFFE-ID]
               SPIFFE Project, "SPIFFE ID Standards",
               <https://github.com/spiffe/spiffe/blob/main/standards/
@@ -879,6 +964,11 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
               <https://github.com/spiffe/spiffe/blob/main/standards/JWT-
               SVID.md>.
 
+   [SPIFFE-X509-SVID]
+              SPIFFE Project, "X.509-SVID Standards",
+              <https://github.com/spiffe/spiffe/blob/main/standards/
+              X509-SVID.md>.
+
 8.2.  Informative References
 
    [I-D.ietf-oauth-spiffe-client-auth]
@@ -888,15 +978,6 @@ Internet-Draft       Delegation Chaining for ID-JAG         October 2026
               ietf-oauth-spiffe-client-auth-02, 15 June 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
               spiffe-client-auth-02>.
-
-
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 16]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
 
    [OpenID.Core]
               Sakimura, N., Bradley, J., Jones, M. B., de Medeiros, B.,
@@ -922,6 +1003,13 @@ A.1.  Scenario Overview
 
    1.  User / Client App: Initiates the high-level request.
 
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 18]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    2.  Agent A (Research Coordinator, spiffe://cluster.local/ns/ai/sa/
        agent-researcher): Receives the user goal and delegates raw data
        retrieval.
@@ -940,20 +1028,6 @@ A.1.  Scenario Overview
    6.  Financial Database Resource Server (https://db.enterprise.net):
        Serves the report data.
 
-
-
-
-
-
-
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 17]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
-
 A.2.  Step-by-Step Protocol Flow
 
    Step 1 (Initial Authentication): Alice authenticates to the AS via
@@ -966,11 +1040,12 @@ A.2.  Step-by-Step Protocol Flow
    Step 2 (Hop 1, Agent A to Agent B): Agent A decides to delegate the
    data retrieval.  It sends the Token Exchange request of Section 4.2
    with subject_token set to its ID-JAG, actor_token set to its JWT-
-   SVID, audience set to Agent B's SPIFFE ID, and scope set to
-   reports:read.  The AS validates the request as described in
-   Section 4.3 and issues the ID-JAG shown in the first example of
-   Section 4.4, with act recording Agent A and may_act naming Agent B.
-   Agent A passes the ID-JAG to Agent B over the A2A transport.
+   SVID, audience set to Agent B's SPIFFE ID, scope set to reports:read,
+   and authorization_details limiting access to /api/v1/reports.  The AS
+   validates the request as described in Section 4.3 and issues the ID-
+   JAG shown in the first example of Section 4.4, with act recording
+   Agent A and may_act naming Agent B.  Agent A passes the ID-JAG to
+   Agent B over the A2A transport.
 
    Step 3 (Hop 2, Agent B to Agent C): Agent B needs the specialized
    worker for the actual query.  It presents the received ID-JAG as the
@@ -983,32 +1058,19 @@ A.2.  Step-by-Step Protocol Flow
    broader than those of the subject_token, and issues the ID-JAG shown
    in the second example of Section 4.4.  Agent B passes it to Agent C.
 
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 19]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    Step 4 (Final Exchange at Agent C): Agent C presents the received ID-
    JAG and its own JWT-SVID, requesting an Access Token for
    https://db.enterprise.net with scope reports:read and the same
    narrowed authorization_details.  The AS validates as before and
    issues an Access Token that carries the complete lineage:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Liu & Parecki             Expires 18 April 2027                [Page 18]
-
-Internet-Draft       Delegation Chaining for ID-JAG         October 2026
-
 
    {
      "iss": "https://auth.enterprise.net",
@@ -1054,6 +1116,12 @@ Authors' Addresses
    Email: max.ldp@alibaba-inc.com
 
 
+
+Liu & Parecki             Expires 18 April 2027                [Page 20]
+
+Internet-Draft       Delegation Chaining for ID-JAG         October 2026
+
+
    Aaron Parecki
    Okta
    Email: aaron@parecki.com
@@ -1061,4 +1129,48 @@ Authors' Addresses
 
 
 
-Liu & Parecki             Expires 18 April 2027                [Page 19]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Liu & Parecki             Expires 18 April 2027                [Page 21]
