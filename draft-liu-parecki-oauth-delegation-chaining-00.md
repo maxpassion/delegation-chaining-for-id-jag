@@ -49,6 +49,12 @@ normative:
     author:
     - org: SPIFFE Project
     date: false
+  SPIFFE-X509-SVID:
+    target: https://github.com/spiffe/spiffe/blob/main/standards/X509-SVID.md
+    title: X.509-SVID Standards
+    author:
+    - org: SPIFFE Project
+    date: false
 
 informative:
   OpenID.Core:
@@ -205,8 +211,19 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<workload-name>
 The workload proves this identity with a JWT-SVID, a JWT whose sub
 claim carries the SPIFFE ID and which is signed by the SPIRE server
 of the trust domain. Verifying a JWT-SVID requires the SPIFFE trust
-bundle of that trust domain. JWT-SVIDs are short-lived by design
+bundle of that trust domain, whose JWT authorities are published as a
+JWK Set {{?RFC7517}}. JWT-SVIDs are short-lived by design
 {{SPIFFE-JWT-SVID}}.
+
+SPIFFE defines a second credential form for the same identity, the
+X.509-SVID {{SPIFFE-X509-SVID}}, which is a certificate for a key
+pair that the workload itself holds. The difference between the two
+forms matters for this specification. A JWT-SVID is signed by the
+SPIRE server, so the workload carries it but cannot produce new
+signed material with it. An X.509-SVID gives the workload a private
+key it can sign with. The primary mechanism presents a JWT-SVID as
+the actor_token. The self-issued variant of [](#self-issued) signs
+its Delegation Assertions with the X.509-SVID private key.
 
 In this profile, the JWT-SVID of the delegating entity is presented
 as the actor_token of the Token Exchange request described in
@@ -280,8 +297,17 @@ actor_token_type=urn:ietf:params:oauth:token-type:jwt
 requested_token_type=urn:ietf:params:oauth:token-type:id-jag
 audience=(the SPIFFE ID or resource URI of the target entity)
 scope=(no wider than the scope of the subject_token)
+authorization_details=(no broader than those of the subject_token)
 ~~~
 {: gi="sourcecode"}
+
+The scope and authorization_details {{!RFC9396}} parameters together
+express the privileges requested for the next hop. Both MUST be no
+broader than the corresponding values of the subject_token, as the
+attenuation check of [](#as-processing) requires. The
+authorization_details parameter carries the fine-grained narrowing,
+for example restricting access to a single resource, and is encoded
+as specified in {{!RFC9396}}.
 
 The audience parameter names the target entity of the delegation,
 e.g., its SPIFFE ID. The aud claim of the issued ID-JAG continues to
@@ -487,13 +513,17 @@ issued by the AS, or an upstream Delegation Assertion whose chain of
 issuers roots at such a grant or token.
 
 Each Delegation Assertion MUST be signed with the private key of the
-delegating entity's SPIFFE workload identity, the same identity it
-proves with its JWT-SVID, see [](#workload-identity). The redeeming
-AS validates the signature against the public key in the SPIFFE trust
-bundle of the issuer's trust domain. That trust bundle is distributed
-as a JWK Set {{?RFC7517}}, so signature validation uses the same
-mechanism and the same trust anchors as validation of the JWT-SVID
-actor_token.
+delegating entity's X.509-SVID, see [](#workload-identity). A
+JWT-SVID cannot serve this purpose, because it is signed by the SPIRE
+server and the workload does not hold that signing key.
+
+The Delegation Assertion is a JWS and MUST carry the signing
+X.509-SVID so that the AS can validate it, for example in the x5c
+header parameter {{!RFC7515}}. The redeeming AS validates the
+signature by checking that this X.509-SVID chains to a certificate
+authority in the SPIFFE trust bundle of the issuer's trust domain,
+and that the SPIFFE ID carried in the X.509-SVID equals the iss claim
+of the Delegation Assertion.
 
 A Delegation Assertion contains the following claims:
 
@@ -600,10 +630,11 @@ request of [](#exchange-request), with the Delegation Assertion as
 the subject_token, subject_token_type set to
 urn:ietf:params:oauth:token-type:jwt, and the target entity's
 JWT-SVID as the actor_token. The AS validates the Delegation
-Assertion signature against the SPIFFE trust bundle of the issuer's
-trust domain, see [](#self-issued-format), checks exp, nbf, and jti,
-verifies the act chain lineage, and applies the attenuation and
-policy checks of [](#as-processing) before issuing an Access Token.
+Assertion signature by chaining its X.509-SVID to the SPIFFE trust
+bundle of the issuer's trust domain, see [](#self-issued-format),
+checks exp, nbf, and jti, verifies the act chain lineage, and applies
+the attenuation and policy checks of [](#as-processing) before
+issuing an Access Token.
 
 A Delegation Assertion and the ID-JAG of the primary mechanism carry
 the actor chain in mirror image. In the ID-JAG the AS is the issuer
@@ -733,11 +764,11 @@ Step 2 (Hop 1, Agent A to Agent B): Agent A decides to delegate the
 data retrieval. It sends the Token Exchange request of
 [](#exchange-request) with subject_token set to its ID-JAG,
 actor_token set to its JWT-SVID, audience set to Agent B's SPIFFE ID,
-and scope set to reports:read. The AS validates the request as
-described in [](#as-processing) and issues the ID-JAG shown in the
-first example of [](#issued-id-jag), with act recording Agent A and
-may_act naming Agent B. Agent A passes the ID-JAG to Agent B over the
-A2A transport.
+scope set to reports:read, and authorization_details limiting access
+to /api/v1/reports. The AS validates the request as described in
+[](#as-processing) and issues the ID-JAG shown in the first example
+of [](#issued-id-jag), with act recording Agent A and may_act naming
+Agent B. Agent A passes the ID-JAG to Agent B over the A2A transport.
 
 Step 3 (Hop 2, Agent B to Agent C): Agent B needs the specialized
 worker for the actual query. It presents the received ID-JAG as the
