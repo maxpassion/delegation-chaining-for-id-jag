@@ -14,6 +14,9 @@ identities as the actor.
 
 - [draft-liu-parecki-oauth-delegation-chaining-00.md](draft-liu-parecki-oauth-delegation-chaining-00.md)
   is the source.
+- [draft-liu-parecki-oauth-delegation-chaining-00.html](draft-liu-parecki-oauth-delegation-chaining-00.html)
+  is the html version.
+
 - `build/` holds the generated RFC XML v3, HTML, and text renditions, rebuilt
   automatically on every Markdown change by GitHub Actions.
 
