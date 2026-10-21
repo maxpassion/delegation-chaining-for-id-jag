@@ -4,7 +4,7 @@
 
 This is the working area for the individual Internet-Draft, "Delegation Chaining for the Identity Assertion JWT Authorization Grant".
 
-* [Text Rendition](https://github.com/maxpassion/delegation-chaining-for-id-jag/blob/gh-pages/draft-liu-parecki-oauth-delegation-chaining.txt)
+* [Text Version](https://github.com/maxpassion/delegation-chaining-for-id-jag/blob/gh-pages/draft-liu-parecki-oauth-delegation-chaining.txt)
 * [Editor's Copy](https://maxpassion.github.io/delegation-chaining-for-id-jag/#go.draft-liu-parecki-oauth-delegation-chaining.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-liu-parecki-oauth-delegation-chaining)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-liu-parecki-oauth-delegation-chaining)
