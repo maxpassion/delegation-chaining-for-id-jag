@@ -1,13 +1,14 @@
 ---
-docname: draft-liu-parecki-oauth-delegation-chaining-00
+docname: draft-liu-parecki-oauth-delegation-chaining-latest
 title: Delegation Chaining for the Identity Assertion JWT Authorization Grant
 abbrev: Delegation Chaining for ID-JAG
 category: std
 submissiontype: IETF
-consensus: true
 ipr: trust200902
+area: Security
+workgroup: Web Authorization Protocol
 lang: en
-date: 2026-10-15
+date:
 keyword:
 - OAuth
 - Token Exchange
@@ -16,6 +17,14 @@ keyword:
 - SPIFFE
 - AI Agents
 - Workload Identity
+
+venue:
+  group: Web Authorization Protocol
+  type: Individual Draft
+  mail: oauth@ietf.org
+  arch: https://mailarchive.ietf.org/arch/browse/oauth/
+  github: maxpassion/delegation-chaining-for-id-jag
+  latest: https://maxpassion.github.io/delegation-chaining-for-id-jag/draft-liu-parecki-oauth-delegation-chaining.html
 
 author:
 -
