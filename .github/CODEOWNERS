@@ -1,4 +1,4 @@
 # Hand-maintained: use the GitHub handle so that review requests work.
 # (Regenerating with `make update-codeowners` would replace the handle
 # with the author email from the draft front matter.)
-draft-liu-parecki-oauth-delegation-chaining.md @maxpassion
+draft-liu-oauth-delegation-chaining.md @maxpassion

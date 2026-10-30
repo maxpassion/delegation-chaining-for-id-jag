@@ -4,11 +4,11 @@
 
 This is the working area for the individual Internet-Draft, "Delegation Chaining for the Identity Assertion JWT Authorization Grant".
 
-* [Text Version](https://github.com/maxpassion/delegation-chaining-for-id-jag/blob/gh-pages/draft-liu-parecki-oauth-delegation-chaining.txt)
-* [Editor's Copy](https://maxpassion.github.io/delegation-chaining-for-id-jag/#go.draft-liu-parecki-oauth-delegation-chaining.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-liu-parecki-oauth-delegation-chaining)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-liu-parecki-oauth-delegation-chaining)
-* [Compare Editor's Copy to Individual Draft](https://maxpassion.github.io/delegation-chaining-for-id-jag/#go.draft-liu-parecki-oauth-delegation-chaining.diff)
+* [Text Version](https://github.com/maxpassion/delegation-chaining-for-id-jag/blob/gh-pages/draft-liu-oauth-delegation-chaining.txt)
+* [Editor's Copy](https://maxpassion.github.io/delegation-chaining-for-id-jag/#go.draft-liu-oauth-delegation-chaining.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-liu-oauth-delegation-chaining)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-liu-oauth-delegation-chaining)
+* [Compare Editor's Copy to Individual Draft](https://maxpassion.github.io/delegation-chaining-for-id-jag/#go.draft-liu-oauth-delegation-chaining.diff)
 
 The text rendition is rebuilt and committed to the `gh-pages` branch on every
 push to `main`, so it can be read from the repository without GitHub Pages.
