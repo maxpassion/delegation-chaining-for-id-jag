@@ -11,7 +11,7 @@
 client obtains a delegated authorization grant from an identity
 assertion. It leaves the validation of the actor_token, the related
 policy evaluation, and the act claim of the issued ID-JAG open for
-future profiles. This specification defines those rules for delegation
+future profiles. This document defines those rules for delegation
 chains, in which a series of workloads, such as AI agents, act on
 behalf of an initial end-user across multiple hops. 
        Each delegating workload authenticates to the Authorization Server
@@ -1102,7 +1102,7 @@ svg {
 client obtains a delegated authorization grant from an identity
 assertion. It leaves the validation of the actor_token, the related
 policy evaluation, and the act claim of the issued ID-JAG open for
-future profiles. This specification defines those rules for delegation
+future profiles. This document defines those rules for delegation
 chains, in which a series of workloads, such as AI agents, act on
 behalf of an initial end-user across multiple hops.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">Each delegating workload authenticates to the Authorization Server
@@ -1184,7 +1184,7 @@ the Authorization Server is not reachable.<a href="#section-abstract-2" class="p
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction-and-problem-st" class="internal xref">Introduction and Problem Statement</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology-and-architectur" class="internal xref">Terminology and Architecture Overview</a></p>
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
             <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-workload-identity-of-the-ac" class="internal xref">Workload Identity of the Actor</a></p>
@@ -1247,38 +1247,41 @@ the Authorization Server is not reachable.<a href="#section-abstract-2" class="p
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-references" class="internal xref">References</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-complete-end-to-end-use-cas" class="internal xref">Complete End-to-End Use Case: Multi-Hop Financial Research Agent Workflow</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-references" class="internal xref">References</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-scenario-overview" class="internal xref">Scenario Overview</a></p>
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
-                <p id="section-toc.1-1.9.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-step-by-step-protocol-flow" class="internal xref">Step-by-Step Protocol Flow</a></p>
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-contributors" class="internal xref">Contributors</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-complete-end-to-end-use-cas" class="internal xref">Complete End-to-End Use Case: Multi-Hop Financial Research Agent Workflow</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-scenario-overview" class="internal xref">Scenario Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-step-by-step-protocol-flow" class="internal xref">Step-by-Step Protocol Flow</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-contributors" class="internal xref">Contributors</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1321,7 +1324,7 @@ Authorization Servers rely on the inter-domain trust relationship
 described in <a href="#chain-overview" class="auto internal xref">Section 4.1</a>.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-1-4">This specification is such a profile. It defines how actor_token is
+<p id="section-1-4">This document is such a profile. It defines how actor_token is
 validated, how it influences policy evaluation, and how the act claim
 is populated when ID-JAGs are chained across multiple hops. The
 mechanism combines:<a href="#section-1-4" class="pilcrow">¶</a></p>
@@ -1343,29 +1346,48 @@ and the act claim (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1
 delegation lineage.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-1-6">Every hop of the chain performs exactly one Token Exchange request.
-Each ID-JAG in the chain is issued by an Authorization Server rather
+<p id="section-1-6">Every hop of the chain performs exactly one request to an
+Authorization Server.
+Each ID-JAG in the chain is issued by an AS rather
 than minted by the delegating entity, so privilege attenuation is
 enforced at every hop rather than merely asserted by the entity that
 delegates, and the full lineage, e.g., User -&gt; Agent A -&gt; Agent B -&gt;
 Agent C, is carried in the act claim of the final Access Token.<a href="#section-1-6" class="pilcrow">¶</a></p>
-<p id="section-1-7">For hops where a round trip to the AS is not practical, for example
+<p id="section-1-7">This document is a profile of
+<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, which is itself a
+profile of <span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>. Identity chaining
+combines OAuth 2.0 Token Exchange with the JWT bearer grant of
+<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> to carry one authorization across the boundary between
+two trust domains, and it intentionally leaves many details
+unspecified. This document supplies some of those details for a
+different shape of problem: a chain of more than two workloads in
+which each hop delegates to the next, where a hop may or may not cross
+a trust domain boundary. One departure is worth stating up front.
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-17#section-2" class="relref">Section 2</a> of [<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span> requires that a JWT
+authorization grant be redeemed for an Access Token through the JWT
+bearer grant of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>. The last hop of the chain defined here
+uses a Token Exchange request instead, for the reason given in
+<a href="#exchange-request" class="auto internal xref">Section 4.2</a>. A deployment that needs to conform to
+<span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span> uses the JWT bearer grant at the
+last hop, and <a href="#exchange-request" class="auto internal xref">Section 4.2</a> defines the checks that apply
+whichever grant is used.<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-8">For hops where a round trip to the AS is not practical, for example
 across trust domains with no reachable common AS, this document also
 defines an optional variant based on self-issued Delegation
 Assertions, see <a href="#self-issued" class="auto internal xref">Section 5</a>. That variant offers weaker
 guarantees and supplements, but does not replace, the Token Exchange
-mechanism.<a href="#section-1-7" class="pilcrow">¶</a></p>
+mechanism.<a href="#section-1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="terminology">
 <section id="section-2">
-      <h2 id="name-terminology-and-architectur">
-<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology-and-architectur" class="section-name selfRef">Terminology and Architecture Overview</a>
+      <h2 id="name-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
       </h2>
-<p id="section-2-1">This specification uses the terms "authorization server" (AS),
+<p id="section-2-1">This document uses the terms "authorization server" (AS),
 "client", "resource server" (RS), and "access token" defined in
-<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, the token exchange parameters defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the act and may_act claims defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2">In addition, this specification defines the following roles and
+<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, the Token Exchange parameters defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the act and may_act claims defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">In addition, this document defines the following roles and
 credentials:<a href="#section-2-2" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-2-3">
         <dt id="section-2-3.1">ID-JAG:</dt>
@@ -1418,7 +1440,8 @@ capitals, as shown here.<a href="#section-2-4" class="pilcrow">¶</a></p>
 <p id="section-3-1">Every workload in the chain, for example an AI agent runtime or a
 container hosting an agentic loop, is provisioned with a cryptographic
 machine identity by trusted infrastructure, such as a SPIRE server.
-The identity is a SPIFFE ID <span>[<a href="#SPIFFE-ID" class="cite xref">SPIFFE-ID</a>]</span> of the form:<a href="#section-3-1" class="pilcrow">¶</a></p>
+The identity is a SPIFFE ID <span>[<a href="#SPIFFE-ID" class="cite xref">SPIFFE-ID</a>]</span>. SPIRE's Kubernetes
+workload registrar assigns IDs of the form:<a href="#section-3-1" class="pilcrow">¶</a></p>
 <div class="sourcecode" id="section-3-2">
 <pre>
 spiffe://&lt;trust-domain&gt;/ns/&lt;namespace&gt;/sa/&lt;workload-name&gt;
@@ -1433,7 +1456,7 @@ JWK Set <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span>. JWT-SVI
 <p id="section-3-4">SPIFFE defines a second credential form for the same identity, the
 X.509-SVID <span>[<a href="#SPIFFE-X509-SVID" class="cite xref">SPIFFE-X509-SVID</a>]</span>, which is a certificate for a key
 pair that the workload itself holds. The difference between the two
-forms matters for this specification. A JWT-SVID is signed by the
+forms matters for this document. A JWT-SVID is signed by the
 SPIRE server, so the workload carries it but cannot produce new
 signed material with it. An X.509-SVID gives the workload a private
 key it can sign with. The primary mechanism presents a JWT-SVID as
@@ -1484,15 +1507,47 @@ transport, for example an HTTP header, gRPC metadata, or an MCP
 payload. Agent B now holds the delegated authorization and can either
 redeem it for an Access Token of a resource server or delegate
 further to Agent C in exactly the same way. Each hop of the chain
-therefore performs exactly one Token Exchange request, and every
+therefore performs exactly one request to an AS, and every
 ID-JAG is issued by an AS that has validated the ID-JAG presented at
 the hop before it.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
-<p id="section-4.1-4">The chain ends when the last workload exchanges the ID-JAG it holds
+<span id="name-one-hop-of-the-delegation-c"></span><div id="fig-hop">
+<figure id="figure-1">
+          <div class="alignLeft art-text artwork" id="section-4.1-4.1">
+<pre>
+Agent A                    AS                     Agent B
+   |                        |                         |
+   |-- (1) request JWT-SVID, aud = AS ---------------&gt;|
+   |&lt;----------------- (2) JWT-SVID of Agent B -------|
+   |                        |                         |
+   |-- (3) Token Exchange -&gt;|                         |
+   |      subject_token = ID-JAG held by Agent A      |
+   |      actor_token   = JWT-SVID of Agent B         |
+   |                        |-- (4) authenticate A,   |
+   |                        |    validate B, check    |
+   |                        |    may_act, attenuate   |
+   |&lt;-- (5) new ID-JAG -----|                         |
+   |      act = A, may_act = B, client_id = B         |
+   |                        |                         |
+   |-- (6) pass the new ID-JAG over the A2A transport&gt;|
+   |                        |                         |
+   |                        |-- (7) Agent B repeats   |
+   |                        |   (3)-(6) to delegate   |
+   |                        |   further, or redeems   |
+   |                        |   the ID-JAG for an     |
+   |                        |   Access Token          |
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-one-hop-of-the-delegation-c" class="selfRef">One hop of the delegation chain</a>
+          </figcaption></figure>
+</div>
+<p id="section-4.1-5"><a href="#fig-hop" class="auto internal xref">Figure 1</a> shows a single hop. The chain ends when the last
+workload exchanges the ID-JAG it holds
 for an Access Token of the resource server it needs to call. The
 Access Token carries the complete actor chain in its act claim,
 e.g., User -&gt; Agent A -&gt; Agent B -&gt; Agent C, which gives the resource
-server verifiable multi-hop provenance.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
-<p id="section-4.1-5">When the target entity operates in a different trust domain with its
+server verifiable multi-hop provenance.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+<p id="section-4.1-6">When the target entity operates in a different trust domain with its
 own AS, the AS of the delegating entity issues the ID-JAG with the
 aud claim set to the issuer identifier of the target domain's AS, as
 described in <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>. The
@@ -1501,7 +1556,7 @@ of <a href="#as-processing" class="auto internal xref">Section 4.3</a> apply at 
 redeeming AS validates the signature of the ID-JAG against the
 signing key of the issuing AS identified by its iss claim, which it
 obtains through the inter-domain trust relationship between the two
-Authorization Servers.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+Authorization Servers.<a href="#section-4.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="exchange-request">
@@ -1520,30 +1575,56 @@ subject_token_type=urn:ietf:params:oauth:token-type:id-jag
 actor_token=(the JWT-SVID of the target entity)
 actor_token_type=urn:ietf:params:oauth:token-type:jwt
 requested_token_type=urn:ietf:params:oauth:token-type:id-jag
-audience=(the AS that will redeem the issued ID-JAG)
+audience=(the entity at which the issued token will be presented)
 resource=(the resource server the authorization is destined for)
 scope=(no wider than the scope of the subject_token)
 authorization_details=(no broader than those of the subject_token)
 </pre><a href="#section-4.2-2" class="pilcrow">¶</a>
 </div>
-<p id="section-4.2-3">The scope and authorization_details <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span> parameters together
+<p id="section-4.2-3">The subject_token, subject_token_type, actor_token, actor_token_type,
+requested_token_type, and audience parameters are REQUIRED in this
+profile, notwithstanding that <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines
+actor_token and audience as OPTIONAL. The processing rules of
+<a href="#as-processing" class="auto internal xref">Section 4.3</a> depend on the identity carried by the actor_token,
+branch on requested_token_type, and derive the aud claim of the
+issued token from audience. Client authentication is likewise
+mandatory, see <a href="#as-processing" class="auto internal xref">Section 4.3</a>. The resource parameter remains
+OPTIONAL as in <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> and is constrained by step 5 of
+<a href="#as-processing" class="auto internal xref">Section 4.3</a> when present.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">Using the value urn:ietf:params:oauth:token-type:id-jag for
+subject_token_type is an extension of
+<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, whose Section 4.3
+lists only the id_token, saml2, and refresh_token values for that
+parameter. The URN itself is already registered by Section 10.2 of
+that document as a token type URI, which <span><a href="https://rfc-editor.org/rfc/rfc8693#section-3" class="relref">Section 3</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>
+permits in both subject_token_type and requested_token_type. It is
+this use of an ID-JAG as the subject_token of a further exchange that
+carries the delegation continuation gap of <a href="#introduction" class="auto internal xref">Section 1</a>.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<p id="section-4.2-5">The scope and authorization_details <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span> parameters together
 express the privileges requested for the next hop. Both MUST be no
 broader than the corresponding values of the subject_token, as the
 attenuation check of <a href="#as-processing" class="auto internal xref">Section 4.3</a> requires. The
 authorization_details parameter carries the fine-grained narrowing,
 for example restricting access to a single resource, and is encoded
-as specified in <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
-<p id="section-4.2-4">The audience parameter names the AS that will redeem the issued
-ID-JAG, and the AS sets the aud claim of the issued ID-JAG to that
-identifier, as required by
-<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>. The identity of
-the target entity is carried in the actor_token instead, and the AS
+as specified in <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-6">The audience parameter has a single meaning throughout this profile:
+it names the entity at which the issued token will be presented, as
+<span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines it. At an intermediate hop the
+issued ID-JAG is redeemed at the AS of the next hop, so audience
+names that AS, and the AS sets the aud claim of the issued ID-JAG to
+that identifier. Permitting audience to name an AS in the same trust
+domain as the requesting client is an extension of
+<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, whose Section 4.3
+defines audience as the Resource Authorization Server in another
+trust domain; the cross-domain case described there is one instance
+of the rule here. The identity of the target entity is carried in the
+actor_token instead, and the AS
 records it in the may_act claim of the issued ID-JAG, which binds the
 ID-JAG to the entity entitled to redeem it in the next exchange. The
 resource parameter <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> names the resource server the
 authorization is ultimately destined for and is carried forward
-unchanged at every hop.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
-<p id="section-4.2-5">The actor_token identifies the party that will wield the issued
+at every hop.<a href="#section-4.2-6" class="pilcrow">¶</a></p>
+<p id="section-4.2-7">The actor_token identifies the party that will wield the issued
 ID-JAG, which is the reading <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> gives that
 parameter. The delegating entity is not named by any request
 parameter. It is identified by the client authentication it performs
@@ -1552,32 +1633,40 @@ at the token endpoint, which SHOULD use its JWT-SVID as described in
 methods MAY be used. Client authentication is not optional in this
 profile, because the AS derives the act claim of the issued ID-JAG
 from the authenticated client identity, see <a href="#as-processing" class="auto internal xref">Section 4.3</a> and
-<a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
-<p id="section-4.2-6">At an intermediate hop the delegating entity therefore has to obtain
+<a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.<a href="#section-4.2-7" class="pilcrow">¶</a></p>
+<p id="section-4.2-8">At an intermediate hop the delegating entity therefore has to obtain
 the JWT-SVID of its target from that target before it can make the
 request. The consequences of that transfer are discussed in
 <a href="#sec-actor-transfer" class="auto internal xref">Section 6.2</a>. At the last hop the target entity is the
-requester itself and the actor_token is its own JWT-SVID.<a href="#section-4.2-6" class="pilcrow">¶</a></p>
-<p id="section-4.2-7">The last hop of the chain requests an Access Token instead of an
-ID-JAG, with requested_token_type=urn:ietf:params:oauth:token-type:access_token
-and audience set to the AS that issues the Access Token. The resource
-server itself is named by the resource parameter rather than by
-audience, so that audience keeps the single meaning it has throughout
-this profile. The response to every exchange follows
+requester itself and the actor_token is its own JWT-SVID.<a href="#section-4.2-8" class="pilcrow">¶</a></p>
+<p id="section-4.2-9">The last hop of the chain requests an Access Token instead of an
+ID-JAG, with requested_token_type=urn:ietf:params:oauth:token-type:access_token.
+That Access Token is presented to the resource server rather than to
+another AS, so at this hop audience names the resource server and
+coincides with the resource parameter where that parameter is used.
+The response to
+every exchange follows
 <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.1" class="relref">Section 2.2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>. For an ID-JAG, the ID-JAG is returned
-in the access_token parameter and token_type is set to N_A.<a href="#section-4.2-7" class="pilcrow">¶</a></p>
-<p id="section-4.2-8">This profile uses a Token Exchange request at the last hop rather
-than the jwt-bearer grant of
-<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4" class="relref">Section 4.4</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, so
-that every hop of a chain has one request shape and one set of
-processing requirements. That is an extension of
+in the access_token parameter and token_type is set to N_A.<a href="#section-4.2-9" class="pilcrow">¶</a></p>
+<p id="section-4.2-10">This profile uses a Token Exchange request at the last hop rather
+than the jwt-bearer grant of <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4" class="relref">Section 4.4</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, so that every hop of
+a chain has one request shape and one set of processing requirements.
+This departs from <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-17#section-2" class="relref">Section 2</a> of [<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>, which requires a JWT
+authorization grant to be redeemed for an Access Token through the
+jwt-bearer grant of <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, and from
 <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, which directs the
-holder of an ID-JAG to redeem it as a jwt-bearer assertion. A
-deployment that prefers the jwt-bearer grant MAY use it at the last
-hop instead. Whichever grant is used, the redeeming Authorization
+holder of an ID-JAG to redeem it that way. What the departure buys is
+a single request shape and a single set of Authorization Server
+processing requirements across all hops of a chain; what it costs is
+that the last hop is not conformant with
+<span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>. A deployment that requires that
+conformance, or that simply prefers the jwt-bearer grant, MAY use it
+at the last hop instead, and an Authorization Server that serves
+chains of both kinds SHOULD support both. Whichever grant is used, the
+redeeming Authorization
 Server MUST apply the hop binding, attenuation, and delegation policy
 checks of <a href="#as-processing" class="auto internal xref">Section 4.3</a> and MUST build the act claim of the
-Access Token as described in <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.<a href="#section-4.2-8" class="pilcrow">¶</a></p>
+Access Token as described in <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.<a href="#section-4.2-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="as-processing">
@@ -1608,6 +1697,8 @@ determine the actor of this hop.<a href="#section-4.3-2.1.1" class="pilcrow">¶<
 SPIFFE trust bundle of the actor's trust domain, MUST verify its
 temporal validity (exp and nbf), and MUST verify that it is an
 intended audience of the JWT-SVID as identified by its aud claim.
+If the AS holds no trust bundle for the trust domain of the actor,
+it MUST reject the request rather than skip this validation.
 The SPIFFE ID in the sub claim of the actor_token identifies the
 target entity of this hop. Where requested_token_type is
 urn:ietf:params:oauth:token-type:id-jag, the target entity is a
@@ -1623,7 +1714,12 @@ reject a request in which they differ.<a href="#section-4.3-2.2.1" class="pilcro
 ID-JAG as required by
 <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, including
 signature, issuer, audience, expiration, not-before, and jti. The
-aud claim of the subject_token MUST identify the AS itself. The AS
+aud claim of the subject_token MUST identify the AS itself. Where
+the subject_token carries a client_id claim, that claim MUST
+identify the authenticated client, as
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-4.4.1" class="relref">Section 4.4.1</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>
+requires, and a request in which the two differ MUST be rejected.
+The AS
 MUST verify the signature of the subject_token against the signing
 key of the issuer identified by its iss claim. Where that issuer
 is the AS itself, this is its own key; where the subject_token was
@@ -1681,8 +1777,9 @@ because the target of a delegation is in general chosen at runtime
 and cannot have been named when the subject_token was issued. The
 AS MUST determine the current depth of the chain by counting the
 nested act claims of the subject_token, where a subject_token that
-carries no act claim is at depth zero, and SHOULD reject a request
-whose resulting depth would exceed a configured maximum. No
+carries no act claim is at depth zero, and MUST reject a request
+whose resulting depth would exceed the maximum the AS is
+configured to allow. No
 separate depth claim is needed for this, because the act chain
 already carries the information.<a href="#section-4.3-2.6.1" class="pilcrow">¶</a></p>
 </li>
@@ -1690,10 +1787,12 @@ already carries the information.<a href="#section-4.3-2.6.1" class="pilcrow">¶<
             <p id="section-4.3-2.7.1">Issuance: The AS issues the new ID-JAG with the subject
 unchanged, i.e., the end-user, with the attenuated scope and
 authorization_details, and with the resource of the request
-carried forward. The act, may_act, and
-client_id claims are populated as described in <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.
-The lifetime of the issued ID-JAG SHOULD be short, and the jti
-value MUST be unique among all tokens issued by the AS.<a href="#section-4.3-2.7.1" class="pilcrow">¶</a></p>
+carried forward. The act, may_act, and client_id claims are
+populated as described in <a href="#issued-id-jag" class="auto internal xref">Section 4.4</a>.
+The lifetime of the issued ID-JAG SHOULD NOT exceed 60 seconds, the
+limit RECOMMENDED for Delegation Assertions in
+<a href="#self-issued-format" class="auto internal xref">Section 5.2</a>, and the jti value MUST be unique among the
+tokens the AS has issued and still tracks.<a href="#section-4.3-2.7.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1706,15 +1805,16 @@ value MUST be unique among all tokens issued by the AS.<a href="#section-4.3-2.7
 <p id="section-4.4-1">The issued ID-JAG carries the end-user as its subject, the attenuated
 privileges, and the actor chain. The act claim follows <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>: the outermost value represents the current actor, and
 nested values represent prior actors. At each exchange, the AS sets
-the outermost act value to the authenticated client, i.e., the
-delegating entity of that hop, and nests the act claim of the
+the outermost act value to the authenticated client, that is, the
+delegating entity at an intermediate hop and the target entity at the
+last hop, and nests the act claim of the
 subject_token inside it. The may_act claim follows <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and is set to the SPIFFE ID carried in the sub claim of
 the actor_token, i.e., the party entitled to redeem the issued
 ID-JAG. The client_id claim is set to that same value, so that it
 matches the client authentication the target entity performs when it
 presents the ID-JAG, as required by
 <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
-<p id="section-4.4-2">This differs from the delegation example of <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, in which
+<p id="section-4.4-2">This differs from the delegation example of <span><a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.2" class="relref">Appendix A.2</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, in which
 the act claim of the issued token repeats the subject of the
 actor_token. That example covers a request for a token the requester
 will wield itself, where the requester and the actor are the same
@@ -1878,8 +1978,8 @@ of the Delegation Assertion.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 redeemed.<a href="#section-5.2-5.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.2-5.4">
-            <p id="section-5.2-5.4.1">exp and nbf: a short temporal validity window, a lifetime of 60
-seconds or less is recommended.<a href="#section-5.2-5.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.2-5.4.1">exp and nbf: a short temporal validity window. A lifetime of 60
+seconds or less is RECOMMENDED.<a href="#section-5.2-5.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.2-5.5">
             <p id="section-5.2-5.5.1">jti: a unique assertion identifier, used for replay prevention.<a href="#section-5.2-5.5.1" class="pilcrow">¶</a></p>
@@ -2012,8 +2112,11 @@ other entity in this variant. The AS validates the Delegation
 Assertion signature by chaining its X.509-SVID to the SPIFFE trust
 bundle of the issuer's trust domain, see <a href="#self-issued-format" class="auto internal xref">Section 5.2</a>,
 checks exp, nbf, and jti, verifies the act chain lineage, and applies
-the attenuation and policy checks of <a href="#as-processing" class="auto internal xref">Section 4.3</a> before
-issuing an Access Token.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+the attenuation check and the delegation policy of steps 5 and 6 of
+<a href="#as-processing" class="auto internal xref">Section 4.3</a> before issuing an Access Token. Steps 3 and 4 of
+<a href="#as-processing" class="auto internal xref">Section 4.3</a> do not apply to this variant, because the
+subject_token is a Delegation Assertion rather than an ID-JAG and
+carries no may_act claim.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
 <p id="section-5.4-2">A Delegation Assertion and the ID-JAG of the primary mechanism carry
 the actor chain in mirror image. In the ID-JAG the AS is the issuer
 and the act claim carries the current actor together with its
@@ -2035,9 +2138,12 @@ implementers need to understand them:<a href="#section-5.4-3" class="pilcrow">¶
 see <a href="#self-issued-applicability" class="auto internal xref">Section 5.1</a>, the Delegation Assertion that
 reaches the AS at redemption is self-issued and the AS did not
 issue it. The AS cannot tell from the assertion alone whether its
-chain of issuers truly roots at a grant the AS issued. The AS
-SHOULD corroborate this, for example by requiring the end-user's
-token alongside the Delegation Assertion at redemption.<a href="#section-5.4-4.1.1" class="pilcrow">¶</a></p>
+chain of issuers truly roots at a grant the AS issued. The request
+defined in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> carries a single
+subject_token and leaves no place for the end-user's own token, so
+the AS SHOULD corroborate the root by means available to it, for
+example by matching the sub claim against a grant it issued within
+the lifetime of the assertion.<a href="#section-5.4-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.4-4.2">
             <p id="section-5.4-4.2.1">Attenuation performed by intermediate entities is not independently
@@ -2076,7 +2182,12 @@ entity may_act names, and the AS rejects the exchange at the hop
 binding check of <a href="#as-processing" class="auto internal xref">Section 4.3</a>.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
 <p id="section-6.1-2">For self-issued Delegation Assertions, the aud claim MUST be strictly
 locked to the token endpoint of the AS to prevent cross-service
-injection or replay.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+injection or replay. The two mechanisms therefore use different
+audience forms, the issuer identifier for ID-JAGs and the token
+endpoint for Delegation Assertions; both are permitted by
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-17#section-2.4.2" class="relref">Section 2.4.2</a> of [<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>. Each is fixed
+per mechanism, so a token of one mechanism is not a valid audience
+match for the other and the two cannot be substituted.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-actor-transfer">
@@ -2107,13 +2218,13 @@ infrastructure supports, and the delegating entity MUST NOT retain
 it after the exchange completes.<a href="#section-6.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.2-3.3">
-            <p id="section-6.2-3.3.1">The AS MUST reject an actor_token whose aud claim does not name the
-AS itself, which prevents a JWT-SVID minted for one AS from being
-used to request an ID-JAG at another.<a href="#section-6.2-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-3.3.1">The audience check that step 2 of <a href="#as-processing" class="auto internal xref">Section 4.3</a> requires is
+what prevents a JWT-SVID minted for one AS from being used to
+request an ID-JAG at another.<a href="#section-6.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.2-3.4">
-            <p id="section-6.2-3.4.1">The AS MUST record the jti of every actor_token it accepts and
-SHOULD reject reuse of a jti it has already accepted, which limits
+            <p id="section-6.2-3.4.1">The AS MUST record the jti of every actor_token it accepts and MUST
+reject reuse of a jti it has already accepted, which limits
 the value of a disclosed JWT-SVID to a single exchange.<a href="#section-6.2-3.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
@@ -2136,8 +2247,12 @@ bearer credential to any peer.<a href="#section-6.2-4" class="pilcrow">¶</a></p
         </h3>
 <p id="section-6.3-1">Downstream privilege scopes can only be equal to or narrower than
 upstream permissions. The AS enforces this at every hop of the
-primary mechanism, which eliminates unauthorized privilege expansion
-across multi-hop agent or service chains. In the self-issued variant,
+primary mechanism, so no hop can widen the privileges it inherited.
+Two limits remain. Attenuation constrains only what a hop adds, not
+the breadth of the root authorization the end-user granted, and for
+authorization_details it is only as strong as the narrowing relation
+the applicable type supports, see step 5 of <a href="#as-processing" class="auto internal xref">Section 4.3</a>. In the
+self-issued variant,
 attenuation is asserted by the delegating entities and checked only
 at redemption time, see <a href="#self-issued-redemption" class="auto internal xref">Section 5.4</a>.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 </section>
@@ -2148,9 +2263,11 @@ at redemption time, see <a href="#self-issued-redemption" class="auto internal x
 <a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-replay-prevention" class="section-name selfRef">Replay Prevention</a>
         </h3>
 <p id="section-6.4-1">The AS MUST enforce jti uniqueness for the tokens it issues and for
-the Delegation Assertions it redeems. Self-issued Delegation
-Assertions MUST have a short lifespan, a lifetime of 60 seconds or
-less is recommended.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+every subject_token, actor_token, and Delegation Assertion it
+accepts, retaining each recorded jti at least until the corresponding
+token expires. Self-issued Delegation
+Assertions MUST have a short lifespan and SHOULD NOT exceed 60
+seconds.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-transport">
@@ -2189,28 +2306,66 @@ accepted as an indication of compromise.<a href="#section-6.6-2" class="pilcrow"
 </div>
 </section>
 </div>
-<div id="iana">
+<div id="privacy">
 <section id="section-7">
-      <h2 id="name-iana-considerations">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      <h2 id="name-privacy-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
       </h2>
-<p id="section-7-1">This document has no IANA actions.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-1">The act claim of an issued token discloses the full delegation
+topology to every party that receives it, namely which workload
+identities participated, in which trust domains, and in what order. A
+resource server in one trust domain therefore learns the internal
+structure of a chain that originated in another. This disclosure is
+inherent to the delegation semantics the act claim provides, and it is
+bounded by the SPIFFE IDs themselves, which are infrastructure
+identifiers rather than user identifiers. Deployments that consider
+the topology sensitive SHOULD have their AS truncate the act chain
+beyond a configured depth or replace intermediate actors with a
+trust-domain-level identifier, at the cost of weaker attribution.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">The subject identifier of the end user crosses every trust domain the
+chain passes through, and it is the one element that correlates the
+activity of all the workloads in the chain back to a single person.
+The end user has no visibility into that propagation. An AS that
+issues an ID-JAG for a trust domain other than its own SHOULD apply
+its own policy on which subject identifiers may leave the domain, and
+deployments SHOULD prefer pairwise identifiers over a global user
+identifier so that correlation across unrelated chains is not
+possible.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<p id="section-7-3">The actor_token transfer of an intermediate hop additionally discloses
+a workload's JWT-SVID to its upstream peer; <a href="#sec-actor-transfer" class="auto internal xref">Section 6.2</a>
+constrains that disclosure. The self-issued
+variant of <a href="#self-issued" class="auto internal xref">Section 5</a> discloses the X.509-SVID certificate of
+every delegating entity in the chain, since each Delegation Assertion
+carries its signing certificate; the certificate is public information
+within the SPIFFE trust domain but does reveal which workloads exist.<a href="#section-7-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana">
+<section id="section-8">
+      <h2 id="name-iana-considerations">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-8-1">This document has no IANA actions.<a href="#section-8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-8">
+<section id="section-9">
       <h2 id="name-references">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-8.1">
+<section id="section-9.1">
         <h3 id="name-normative-references">
-<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="I-D.ietf-oauth-identity-assertion-authz-grant">[I-D.ietf-oauth-identity-assertion-authz-grant]</dt>
         <dd>
 <span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-assertion-authz-grant-04</span>, <time datetime="2026-05-21" class="refDate">21 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-identity-chaining">[I-D.ietf-oauth-identity-chaining]</dt>
+        <dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Burgin, K.</span>, <span class="refAuthor">Jenkins, M. J.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"OAuth Identity and Authorization Chaining Across Domains"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-chaining-17</span>, <time datetime="2026-07-19" class="refDate">19 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-17">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-17</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
@@ -2227,6 +2382,10 @@ accepted as an indication of compromise.<a href="#section-6.6-2" class="pilcrow"
 <dt id="RFC7519">[RFC7519]</dt>
         <dd>
 <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7519">https://www.rfc-editor.org/rfc/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7523">[RFC7523]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants"</span>, <span class="seriesInfo">RFC 7523</span>, <span class="seriesInfo">DOI 10.17487/RFC7523</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7523">https://www.rfc-editor.org/rfc/rfc7523</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
         <dd>
@@ -2246,23 +2405,23 @@ accepted as an indication of compromise.<a href="#section-6.6-2" class="pilcrow"
 <dd class="break"></dd>
 <dt id="SPIFFE-ID">[SPIFFE-ID]</dt>
         <dd>
-<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"SPIFFE ID Standards"</span>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md">https://github.com/spiffe/spiffe/blob/main/standards/SPIFFE-ID.md</a>&gt;</span>. </dd>
+<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"SPIFFE ID Standards"</span>, <time datetime="2026-10-30" class="refDate">30 October 2026</time>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/SPIFFE-ID.md">https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/SPIFFE-ID.md</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE-JWT-SVID">[SPIFFE-JWT-SVID]</dt>
         <dd>
-<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"JWT-SVID Standards"</span>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md">https://github.com/spiffe/spiffe/blob/main/standards/JWT-SVID.md</a>&gt;</span>. </dd>
+<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"JWT-SVID Standards"</span>, <time datetime="2026-10-30" class="refDate">30 October 2026</time>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/JWT-SVID.md">https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/JWT-SVID.md</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="SPIFFE-X509-SVID">[SPIFFE-X509-SVID]</dt>
       <dd>
-<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"X.509-SVID Standards"</span>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/main/standards/X509-SVID.md">https://github.com/spiffe/spiffe/blob/main/standards/X509-SVID.md</a>&gt;</span>. </dd>
+<span class="refAuthor">SPIFFE Project</span>, <span class="refTitle">"X.509-SVID Standards"</span>, <time datetime="2026-10-30" class="refDate">30 October 2026</time>, <span>&lt;<a href="https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/X509-SVID.md">https://github.com/spiffe/spiffe/blob/03e916d8f920e5dd0b39e625868ba26c2c3ad687/standards/X509-SVID.md</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-8.2">
+<section id="section-9.2">
         <h3 id="name-informative-references">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="I-D.ietf-oauth-spiffe-client-auth">[I-D.ietf-oauth-spiffe-client-auth]</dt>
@@ -2287,7 +2446,7 @@ accepted as an indication of compromise.<a href="#section-6.6-2" class="pilcrow"
       <h2 id="name-complete-end-to-end-use-cas">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-complete-end-to-end-use-cas" class="section-name selfRef">Complete End-to-End Use Case: Multi-Hop Financial Research Agent Workflow</a>
       </h2>
-<p id="appendix-A-1">To illustrate the practical application of this specification, this
+<p id="appendix-A-1">To illustrate the practical application of this document, this
 appendix provides a step-by-step walkthrough of a multi-hop AI agent
 workflow.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <div id="scenario-overview">
@@ -2330,7 +2489,7 @@ and actor chain generation.<a href="#appendix-A.1-2.5.1" class="pilcrow">¶</a><
 the ID-JAG issued for Agent C and issues the final Access Token.<a href="#appendix-A.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-A.1-2.7">
-            <p id="appendix-A.1-2.7.1">Financial Database Resource Server (https://db.enterprise.net):
+            <p id="appendix-A.1-2.7.1">Financial Database Resource Server (https://db.partner.net):
 Serves the report data.<a href="#appendix-A.1-2.7.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
@@ -2345,15 +2504,17 @@ Serves the report data.<a href="#appendix-A.1-2.7.1" class="pilcrow">¶</a></p>
 enterprise AS via OpenID Connect <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span>. Agent A requests
 its initial ID-JAG from that AS with the ID-JAG grant
 <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>, presenting
-Alice's ID Token as the identity assertion and requesting the scope
-"reports:read mail:send".<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+Alice's ID Token as the identity assertion, requesting the scope
+"reports:read mail:send", and setting audience to
+https://auth.enterprise.net so that the issued ID-JAG names the AS at
+which Agent A will present it in Step 2.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
 <p id="appendix-A.2-2">Step 2 (Hop 1, Agent A to Agent B): Agent A decides to delegate the
 data retrieval and obtains from Agent B a JWT-SVID whose aud is
 https://auth.enterprise.net. Agent A authenticates to the enterprise
 AS and sends the Token Exchange request of <a href="#exchange-request" class="auto internal xref">Section 4.2</a> with
 subject_token set to its ID-JAG, actor_token set to Agent B's
 JWT-SVID, audience set to https://auth.enterprise.net, resource set
-to https://db.enterprise.net, scope set to reports:read, and
+to https://db.partner.net, scope set to reports:read, and
 authorization_details limiting access to /api/v1/reports. The
 enterprise AS validates the request as described in
 <a href="#as-processing" class="auto internal xref">Section 4.3</a>. The subject_token carries no may_act claim,
@@ -2369,7 +2530,7 @@ aud is https://auth.enterprise.net, the AS that will process this
 exchange. It presents the received ID-JAG as the subject_token and
 Agent C's JWT-SVID as the actor_token to that AS, with audience set
 to https://auth.partner.net, resource set to
-https://db.enterprise.net, scope set to reports:read, and
+https://db.partner.net, scope set to reports:read, and
 authorization_details narrowing access to the single Q3 report at
 /api/v1/reports/q3.pdf. The enterprise AS verifies that Agent B, the
 authenticated client, matches the may_act claim of the subject_token,
@@ -2384,10 +2545,11 @@ it to Agent C.<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
 ID-JAG to https://auth.partner.net, the AS named by its aud claim,
 as the subject_token, together with its own JWT-SVID as the
 actor_token, requested_token_type set to
-urn:ietf:params:oauth:token-type:access_token, audience set to
-https://auth.partner.net, and resource set to
-https://db.enterprise.net, requesting scope reports:read and the same
-narrowed authorization_details. This is the last hop, so the target
+urn:ietf:params:oauth:token-type:access_token, and both audience and
+resource set to https://db.partner.net, the resource server at
+which the Access Token will be presented, requesting scope
+reports:read and the same narrowed authorization_details. This is the
+last hop, so the target
 entity is Agent C itself and no JWT-SVID is disclosed to a peer. The
 partner AS validates the ID-JAG signature against the signing key of
 https://auth.enterprise.net, verifies that Agent C matches the
@@ -2399,7 +2561,7 @@ lineage:<a href="#appendix-A.2-4" class="pilcrow">¶</a></p>
 {
   "iss": "https://auth.partner.net",
   "sub": "user_original_12345",
-  "aud": "https://db.enterprise.net",
+  "aud": "https://db.partner.net",
   "exp": 1776326950,
   "iat": 1776326890,
   "jti": "urn:uuid:1a2b-3c4d-5e6f-708192a3b4c5",
