@@ -99,9 +99,11 @@ workload it delegates to as the actor_token. The Authorization Server
 validates both workload identities, checks that the delegating
 workload matches the may_act claim of the subject_token, and enforces
 monotonic scope attenuation. It then issues a new ID-JAG for the next
-hop, carrying the actor chain in the act claim. An optional variant
-based on self-issued Delegation Assertions is defined for hops where
-the Authorization Server is not reachable.
+hop, carrying the actor chain in the act claim. The last workload of
+the chain delegates to no one and instead redeems its ID-JAG for an
+Access Token with the JWT bearer grant of {{!RFC7523}}. An optional
+variant based on self-issued Delegation Assertions is defined for hops
+where the Authorization Server is not reachable.
 
 --- middle
 
@@ -169,30 +171,29 @@ two trust domains, and it intentionally leaves many details
 unspecified. This document supplies some of those details for a
 different shape of problem: a chain of more than two workloads in
 which each hop delegates to the next, where a hop may or may not cross
-a trust domain boundary. One departure is worth stating up front.
-{{Section 2 of !I-D.ietf-oauth-identity-chaining}} requires that a JWT
-authorization grant be redeemed for an Access Token through the JWT
-bearer grant of {{!RFC7523}}. The last hop of the chain defined here
-uses a Token Exchange request instead, for the reason given in
-[](#exchange-request). A deployment that needs to conform to
-{{!I-D.ietf-oauth-identity-chaining}} uses the JWT bearer grant at the
-last hop, and [](#exchange-request) defines the checks that apply
-whichever grant is used.
+a trust domain boundary. A hop that delegates onward uses an OAuth 2.0
+Token Exchange request, defined in [](#exchange-request). The last hop
+of the chain delegates to no one; it redeems the ID-JAG it holds for
+an Access Token using the JWT bearer grant of {{!RFC7523}}, as
+{{Section 2 of !I-D.ietf-oauth-identity-chaining}} requires. That form
+is defined in [](#last-hop), and [](#as-processing) states the checks
+that apply to both.
 
 For hops where a round trip to the AS is not practical, for example
 across trust domains with no reachable common AS, this document also
 defines an optional variant based on self-issued Delegation
 Assertions, see [](#self-issued). That variant offers weaker
-guarantees and supplements, but does not replace, the Token Exchange
-mechanism.
+guarantees and supplements, but does not replace, the mechanism of
+[](#chaining).
 
 # Terminology {#terminology}
 
 This document uses the terms "authorization server" (AS),
 "client", "resource server" (RS), and "access token" defined in
 {{!RFC6749}}, the Token Exchange parameters defined in {{Section 2.1
-of !RFC8693}}, and the act and may_act claims defined in {{Section
-4.1 of !RFC8693}} and {{Section 4.4 of !RFC8693}}.
+of !RFC8693}}, the JWT bearer grant parameters defined in
+{{Section 2.1 of !RFC7523}}, and the act and may_act claims defined in
+{{Section 4.1 of !RFC8693}} and {{Section 4.4 of !RFC8693}}.
 
 In addition, this document defines the following roles and
 credentials:
@@ -271,7 +272,7 @@ with some other mechanism, because the act claim of the issued ID-JAG
 is built from the authenticated client identity rather than from the
 actor_token, see [](#as-processing) and [](#issued-id-jag).
 
-# Delegation Chaining with Token Exchange {#chaining}
+# Delegation Chaining {#chaining}
 
 ## Overview {#chain-overview}
 
@@ -302,32 +303,35 @@ ID-JAG is issued by an AS that has validated the ID-JAG presented at
 the hop before it.
 
 ~~~
-Agent A                    AS                     Agent B
-   |                        |                         |
-   |-- (1) request JWT-SVID, aud = AS --------------->|
-   |<----------------- (2) JWT-SVID of Agent B -------|
-   |                        |                         |
-   |-- (3) Token Exchange ->|                         |
-   |      subject_token = ID-JAG held by Agent A      |
-   |      actor_token   = JWT-SVID of Agent B         |
-   |                        |-- (4) authenticate A,   |
-   |                        |    validate B, check    |
-   |                        |    may_act, attenuate   |
-   |<-- (5) new ID-JAG -----|                         |
-   |      act = A, may_act = B, client_id = B         |
-   |                        |                         |
-   |-- (6) pass the new ID-JAG over the A2A transport>|
-   |                        |                         |
-   |                        |-- (7) Agent B repeats   |
-   |                        |   (3)-(6) to delegate   |
-   |                        |   further, or redeems   |
-   |                        |   the ID-JAG for an     |
-   |                        |   Access Token          |
+Agent A                   Agent B                            AS
+   |                         |                                |
+   |--(1) request JWT-SVID ->|                                |
+   |     with aud = the AS   |                                |
+   |<-(2) JWT-SVID of B -----|                                |
+   |                         |                                |
+   |--(3) Token Exchange ------------------------------------>|
+   |     subject_token = ID-JAG held by Agent A               |
+   |     actor_token   = JWT-SVID of Agent B                  |
+   |                         |  (4) authenticate A,           |
+   |                         |      validate B,               |
+   |                         |      check may_act,            |
+   |                         |      attenuate                 |
+   |<-(5) new ID-JAG -----------------------------------------|
+   |     act = A, may_act = B, client_id = B                  |
+   |                         |                                |
+   |--(6) pass new ID-JAG -->|                                |
+   |     over the A2A transport                               |
+   |                         |                                |
+   |                         |  (7) Agent B now repeats       |
+   |                         |      (3)-(6) to delegate       |
+   |                         |      further, or redeems       |
+   |                         |      the ID-JAG for an         |
+   |                         |      Access Token              |
 ~~~
 {: #fig-hop title="One hop of the delegation chain"}
 
 [](#fig-hop) shows a single hop. The chain ends when the last
-workload exchanges the ID-JAG it holds
+workload redeems the ID-JAG it holds
 for an Access Token of the resource server it needs to call. The
 Access Token carries the complete actor chain in its act claim,
 e.g., User -> Agent A -> Agent B -> Agent C, which gives the resource
@@ -344,11 +348,13 @@ signing key of the issuing AS identified by its iss claim, which it
 obtains through the inter-domain trust relationship between the two
 Authorization Servers.
 
-## Token Exchange Request {#exchange-request}
+## The Delegation Request {#exchange-request}
 
-Each hop of the chain is one Token Exchange request to the token
-endpoint of the AS, as defined in {{Section 2.1 of !RFC8693}}, with
-the following parameters:
+Every hop of the chain makes exactly one request to the token
+endpoint of an Authorization Server. A hop that delegates onward, that
+is, every hop but the last, sends an OAuth 2.0 Token Exchange request
+as defined in {{Section 2.1 of !RFC8693}}, with the following
+parameters:
 
 ~~~
 grant_type=urn:ietf:params:oauth:grant-type:token-exchange
@@ -367,13 +373,16 @@ authorization_details=(no broader than those of the subject_token)
 The subject_token, subject_token_type, actor_token, actor_token_type,
 requested_token_type, and audience parameters are REQUIRED in this
 profile, notwithstanding that {{Section 2.1 of !RFC8693}} defines
-actor_token and audience as OPTIONAL. The processing rules of
-[](#as-processing) depend on the identity carried by the actor_token,
-branch on requested_token_type, and derive the aud claim of the
-issued token from audience. Client authentication is likewise
-mandatory, see [](#as-processing). The resource parameter remains
-OPTIONAL as in {{!RFC8707}} and is constrained by step 5 of
-[](#as-processing) when present.
+actor_token and audience as OPTIONAL. The value of
+requested_token_type is always
+urn:ietf:params:oauth:token-type:id-jag in this request, because a hop
+that delegates onward always asks for an ID-JAG; the last hop sends a
+different request, see [](#last-hop). The processing rules of
+[](#as-processing) depend on the identity carried by the actor_token
+and derive the aud claim of the issued ID-JAG from audience. Client
+authentication is likewise mandatory, see [](#as-processing). The
+resource parameter remains OPTIONAL as in {{!RFC8707}} and is
+constrained by step 5 of [](#as-processing) when present.
 
 Using the value urn:ietf:params:oauth:token-type:id-jag for
 subject_token_type is an extension of
@@ -395,21 +404,23 @@ as specified in {{!RFC9396}}.
 
 The audience parameter has a single meaning throughout this profile:
 it names the entity at which the issued token will be presented, as
-{{Section 2.1 of !RFC8693}} defines it. At an intermediate hop the
-issued ID-JAG is redeemed at the AS of the next hop, so audience
-names that AS, and the AS sets the aud claim of the issued ID-JAG to
-that identifier. Permitting audience to name an AS in the same trust
-domain as the requesting client is an extension of
+{{Section 2.1 of !RFC8693}} defines it. The token issued by this
+request is always an ID-JAG and is always redeemed at the AS of the
+next hop, so audience always names an Authorization Server and never
+a resource server, and the AS sets the aud claim of the issued ID-JAG
+to that identifier. Permitting audience to name an AS in the same
+trust domain as the requesting client is an extension of
 {{!I-D.ietf-oauth-identity-assertion-authz-grant}}, whose Section 4.3
 defines audience as the Resource Authorization Server in another
 trust domain; the cross-domain case described there is one instance
 of the rule here. The identity of the target entity is carried in the
-actor_token instead, and the AS
-records it in the may_act claim of the issued ID-JAG, which binds the
-ID-JAG to the entity entitled to redeem it in the next exchange. The
-resource parameter {{!RFC8707}} names the resource server the
-authorization is ultimately destined for and is carried forward
-at every hop.
+actor_token instead, and the AS records it in the may_act claim of
+the issued ID-JAG, which binds the ID-JAG to the entity entitled to
+redeem it in the next request. The resource server for which the
+authorization is ultimately destined is named by the resource
+parameter {{!RFC8707}}, which is carried forward at every hop and
+which the last hop uses to set the aud claim of the Access Token it
+obtains, see [](#last-hop).
 
 The actor_token identifies the party that will wield the issued
 ID-JAG, which is the reading {{Section 2.1 of !RFC8693}} gives that
@@ -422,51 +433,73 @@ profile, because the AS derives the act claim of the issued ID-JAG
 from the authenticated client identity, see [](#as-processing) and
 [](#issued-id-jag).
 
-At an intermediate hop the delegating entity therefore has to obtain
-the JWT-SVID of its target from that target before it can make the
-request. The consequences of that transfer are discussed in
-[](#sec-actor-transfer). At the last hop the target entity is the
-requester itself and the actor_token is its own JWT-SVID.
+The delegating entity therefore has to obtain the JWT-SVID of its
+target from that target before it can make the request. The
+consequences of that transfer are discussed in [](#sec-actor-transfer).
 
-The last hop of the chain requests an Access Token instead of an
-ID-JAG, with requested_token_type=urn:ietf:params:oauth:token-type:access_token.
-That Access Token is presented to the resource server rather than to
-another AS, so at this hop audience names the resource server and
-coincides with the resource parameter where that parameter is used.
-The response to
-every exchange follows
-{{Section 2.2.1 of !RFC8693}}. For an ID-JAG, the ID-JAG is returned
-in the access_token parameter and token_type is set to N_A.
+The response follows {{Section 2.2.1 of !RFC8693}}. The issued ID-JAG
+is returned in the access_token parameter and token_type is set to
+N_A.
 
-This profile uses a Token Exchange request at the last hop rather
-than the jwt-bearer grant of {{Section 4.4 of
-!I-D.ietf-oauth-identity-assertion-authz-grant}}, so that every hop of
-a chain has one request shape and one set of processing requirements.
-This departs from {{Section 2 of
-!I-D.ietf-oauth-identity-chaining}}, which requires a JWT
-authorization grant to be redeemed for an Access Token through the
-jwt-bearer grant of {{!RFC7523}}, and from
-{{!I-D.ietf-oauth-identity-assertion-authz-grant}}, which directs the
-holder of an ID-JAG to redeem it that way. What the departure buys is
-a single request shape and a single set of Authorization Server
-processing requirements across all hops of a chain; what it costs is
-that the last hop is not conformant with
-{{!I-D.ietf-oauth-identity-chaining}}. A deployment that requires that
-conformance, or that simply prefers the jwt-bearer grant, MAY use it
-at the last hop instead, and an Authorization Server that serves
-chains of both kinds SHOULD support both. Whichever grant is used, the
-redeeming Authorization
-Server MUST apply the hop binding, attenuation, and delegation policy
-checks of [](#as-processing) and MUST build the act claim of the
-Access Token as described in [](#issued-id-jag).
+## Redemption at the Last Hop {#last-hop}
+
+The last workload of the chain delegates to no one. It redeems the
+ID-JAG it holds for an Access Token, and it does so with the JWT
+bearer grant of {{!RFC7523}}, as {{Section 2 of
+!I-D.ietf-oauth-identity-chaining}} requires and as
+{{Section 4.4 of !I-D.ietf-oauth-identity-assertion-authz-grant}}
+describes:
+
+~~~
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+assertion=(the ID-JAG held by the redeeming entity)
+scope=(no wider than the scope of the assertion)
+~~~
+{: gi="sourcecode"}
+
+This request, as defined here, uses the parameter values and encodings
+of {{Section 2.1 of !RFC7523}} and takes no actor_token, no audience,
+and no resource parameter. The redeeming entity is identified by the
+client
+authentication it performs, which MUST succeed and which the AS MUST
+match against the may_act claim of the assertion, as step 4 of
+[](#as-processing) requires. The aud claim of the assertion already
+names this AS, because that is what the audience parameter of the hop
+that issued it asked for, and {{Section 2.4.2 of
+!I-D.ietf-oauth-identity-chaining}} permits that value to be either
+the token endpoint of the AS or its issuer identifier. The resource
+server for which access is requested is named by the resource claim
+of the assertion where that claim is present, carried forward from
+the hop that set it, and the AS sets the aud claim of the issued
+Access Token accordingly. Where the assertion carries no resource
+claim, the AS determines the audience of the Access Token by its own
+policy.
+
+Because the request carries no actor_token, the last hop presents no
+JWT-SVID at all, not even one of its own. The scope parameter MUST be
+no wider than the scope of the assertion, and since the request
+defined here carries no authorization_details or resource parameter,
+the fine-grained narrowing and the resource binding of the issued
+Access Token are those the assertion already carries. The AS MAY
+narrow them further by policy and MUST NOT widen them. The response is
+the access token response of {{Section 5.1 of !RFC6749}}, and an
+assertion that fails validation yields the invalid_grant error of
+{{Section 3.1 of !RFC7523}}. {{Section 3.1 of !RFC7523}} leaves
+client authentication to the policy of the Authorization Server; this
+profile requires it, because the act claim of the issued Access Token
+is built from the authenticated client identity, see
+[](#issued-id-jag).
 
 ## Authorization Server Processing Requirements {#as-processing}
 
-Upon receiving a Token Exchange request as described in
-[](#exchange-request), the AS executes the following verification and
-policy evaluation pipeline. These requirements answer the questions
-that {{Section 4.3 of !I-D.ietf-oauth-identity-assertion-authz-grant}}
-leaves open, and they apply at every hop of the chain:
+Upon receiving a request of either form, the delegation request of
+[](#exchange-request) or the last-hop request of [](#last-hop), the AS
+executes the following verification and policy evaluation pipeline.
+These requirements answer the questions that
+{{Section 4.3 of !I-D.ietf-oauth-identity-assertion-authz-grant}}
+leaves open, and they apply at every hop of the chain. Where a step
+names the subject_token, that is the assertion parameter at the last
+hop, and the same validation applies to it:
 
 1. Client authentication: The AS MUST authenticate the client making
    the request. SVID-based client authentication
@@ -477,22 +510,26 @@ leaves open, and they apply at every hop of the chain:
    [](#issued-id-jag). A request that carries no client
    authentication MUST be rejected, because without it the AS cannot
    determine the actor of this hop.
-2. Actor validation: The actor_token MUST be a JWT-SVID
-   {{SPIFFE-JWT-SVID}}. The AS MUST verify its signature against the
-   SPIFFE trust bundle of the actor's trust domain, MUST verify its
-   temporal validity (exp and nbf), and MUST verify that it is an
-   intended audience of the JWT-SVID as identified by its aud claim.
-   If the AS holds no trust bundle for the trust domain of the actor,
-   it MUST reject the request rather than skip this validation.
+2. Actor validation: Where the request carries an actor_token, the
+   following applies. The last-hop request of [](#last-hop) carries
+   none and skips this step. The actor_token MUST be a
+   JWT-SVID {{SPIFFE-JWT-SVID}}. The AS MUST verify its signature
+   against the SPIFFE trust bundle of the actor's trust domain, MUST
+   verify its temporal validity (exp and nbf), and MUST verify that it
+   is an intended audience of the JWT-SVID as identified by its aud
+   claim. If the AS holds no trust bundle for the trust domain of the
+   actor, it MUST reject the request rather than skip this validation.
    The SPIFFE ID in the sub claim of the actor_token identifies the
    target entity of this hop. Where requested_token_type is
-   urn:ietf:params:oauth:token-type:id-jag, the target entity is a
-   downstream delegate and MUST differ from the authenticated client;
-   the AS MUST reject a request in which the two are the same. Where
-   requested_token_type is
-   urn:ietf:params:oauth:token-type:access_token, the target entity
-   is the requester itself and the two MUST be the same; the AS MUST
-   reject a request in which they differ.
+   urn:ietf:params:oauth:token-type:id-jag, as it is in every request
+   of [](#exchange-request), the target entity is a downstream
+   delegate and MUST differ from the authenticated client; the AS MUST
+   reject a request in which the two are the same, because a hop that
+   delegates to itself delegates to no one. Where requested_token_type
+   is urn:ietf:params:oauth:token-type:access_token, as it is in the
+   variant of [](#self-issued-redemption), the requester is also the
+   party that will wield the issued token and the two MUST be the
+   same; the AS MUST reject a request in which they differ.
 3. Subject validation: The subject_token MUST be validated as an
    ID-JAG as required by
    {{!I-D.ietf-oauth-identity-assertion-authz-grant}}, including
@@ -523,7 +560,14 @@ leaves open, and they apply at every hop of the chain:
    may_act claim, as is the case for the initial ID-JAG obtained
    through the ID-JAG grant, the AS MUST apply its own policy to
    decide whether the authenticated client may delegate the
-   subject_token further.
+   subject_token further. In the request of [](#last-hop), which
+   carries no actor_token, this check is the only one that identifies
+   the redeeming entity, and where the assertion contains a may_act
+   claim, as every ID-JAG issued at a hop that delegates onward does,
+   the AS MUST NOT skip it. Where the assertion is an initial ID-JAG
+   obtained directly through the ID-JAG grant and so contains no
+   may_act claim, the AS MUST apply its own policy to decide whether
+   the authenticated client may redeem it.
 5. Attenuation check: The requested scope MUST be a subset of or
    equal to the scope of the subject_token, where scope is compared
    as a set of space-delimited values. A request that contains a
@@ -539,7 +583,12 @@ leaves open, and they apply at every hop of the chain:
    authorization_details based on policy. Where the subject_token
    carries a resource claim, the requested resource MUST be the same
    or narrower, and the AS MUST reject a request that names a
-   resource server the subject_token does not.
+   resource server the subject_token does not. The request of
+   [](#last-hop) carries a scope parameter and nothing else to
+   attenuate, so for that request this step applies to scope alone and
+   the authorization_details and resource of the issued Access Token
+   are those the assertion carries, which the AS MAY narrow but MUST
+   NOT widen.
 6. Delegation policy: The AS MUST apply its delegation policy to
    decide whether the authenticated client is permitted to delegate
    to the target entity named by the actor_token, and which scopes
@@ -547,7 +596,14 @@ leaves open, and they apply at every hop of the chain:
    Policy evaluation takes the authenticated client identity, the
    target entity identity, and the subject authorization as input.
    Where policy permits no such delegation the AS MUST reject the
-   request. This check is what authorizes each hop. The may_act claim
+   request. This check is what authorizes each hop. Where the request
+   is a redemption rather than a delegation, that is, where
+   requested_token_type is
+   urn:ietf:params:oauth:token-type:access_token or the request is the
+   jwt-bearer request of [](#last-hop), the delegation part of this
+   step does not apply; the AS instead applies its policy on whether
+   the authenticated client may redeem for the resource server named,
+   and the depth limit below still applies. The may_act claim
    of the subject_token binds the hop to the entity entitled to
    present it, but it does not authorize a further delegation,
    because the target of a delegation is in general chosen at runtime
@@ -559,28 +615,36 @@ leaves open, and they apply at every hop of the chain:
    configured to allow. No
    separate depth claim is needed for this, because the act chain
    already carries the information.
-7. Issuance: The AS issues the new ID-JAG with the subject
-   unchanged, i.e., the end-user, with the attenuated scope and
-   authorization_details, and with the resource of the request
-   carried forward. The act, may_act, and client_id claims are
-   populated as described in [](#issued-id-jag).
+7. Issuance: At a hop that delegates onward the AS issues the new
+   ID-JAG with the subject unchanged, i.e., the end-user, with the
+   attenuated scope and authorization_details, and with the resource
+   of the request carried forward. The act, may_act, and client_id
+   claims are populated as described in [](#issued-id-jag).
    The lifetime of the issued ID-JAG SHOULD NOT exceed 60 seconds, the
    limit RECOMMENDED for Delegation Assertions in
    [](#self-issued-format), and the jti value MUST be unique among the
-   tokens the AS has issued and still tracks.
+   tokens the AS has issued and still tracks. Where the request is a
+   redemption, the AS issues an Access Token instead, with the same
+   subject and the same attenuated privileges, with the aud claim set
+   as described in [](#last-hop) for the jwt-bearer request, and with
+   the act claim built as described in [](#issued-id-jag). A may_act
+   claim is not meaningful in that Access Token, because nothing
+   redeems it.
 
 ## The Issued ID-JAG {#issued-id-jag}
 
 The issued ID-JAG carries the end-user as its subject, the attenuated
 privileges, and the actor chain. The act claim follows {{Section 4.1
 of !RFC8693}}: the outermost value represents the current actor, and
-nested values represent prior actors. At each exchange, the AS sets
+nested values represent prior actors. At each hop, the AS sets
 the outermost act value to the authenticated client, that is, the
-delegating entity at an intermediate hop and the target entity at the
-last hop, and nests the act claim of the
-subject_token inside it. The may_act claim follows {{Section 4.4 of
-!RFC8693}} and is set to the SPIFFE ID carried in the sub claim of
-the actor_token, i.e., the party entitled to redeem the issued
+delegating entity at a hop that delegates onward and the entity the
+assertion was issued to at the last hop, and nests the act claim of
+the subject_token inside it. The same rule builds the act claim of
+the Access Token issued at the last hop. The may_act claim follows
+{{Section 4.4 of !RFC8693}} and is set to the SPIFFE ID carried in
+the sub claim of the actor_token, i.e., the party entitled to redeem
+the issued
 ID-JAG. The client_id claim is set to that same value, so that it
 matches the client authentication the target entity performs when it
 presents the ID-JAG, as required by
@@ -617,6 +681,7 @@ that will present this ID-JAG:
   "exp": 1776326800,
   "iat": 1776326740,
   "jti": "urn:uuid:8e41-4b72-9b2a-111122223333",
+  "resource": "https://db.partner.net",
   "scope": "reports:read",
   "authorization_details": [
     {
@@ -652,6 +717,7 @@ does not repeat iss:
   "exp": 1776326900,
   "iat": 1776326840,
   "jti": "urn:uuid:f901-2222-3333-444455556666",
+  "resource": "https://db.partner.net",
   "scope": "reports:read",
   "authorization_details": [
     {
@@ -835,11 +901,17 @@ it, and an implementation that does not understand it MUST ignore it:
 ## Redemption at the Authorization Server {#self-issued-redemption}
 
 A target entity that received a Delegation Assertion redeems it at
-the AS named by the aud claim. The request is the Token Exchange
-request of [](#exchange-request) in its last-hop form, with the
-Delegation Assertion as the subject_token, subject_token_type set to
-urn:ietf:params:oauth:token-type:jwt, and the redeeming entity's own
-JWT-SVID as the actor_token. Because the requester is also the party
+the AS named by the aud claim. The request is a Token Exchange
+request as in [](#exchange-request), with the Delegation Assertion as
+the subject_token, subject_token_type set to
+urn:ietf:params:oauth:token-type:jwt, requested_token_type set to
+urn:ietf:params:oauth:token-type:access_token, and the redeeming
+entity's own JWT-SVID as the actor_token. This variant keeps the
+Token Exchange form rather than the JWT bearer grant of
+[](#last-hop) because the AS builds the act claim of the Access Token
+from the sub claim of that actor_token, see below, whereas a
+Delegation Assertion names its issuer and not its presenter. Because
+the requester is also the party
 that will wield the issued token, no JWT-SVID is disclosed to any
 other entity in this variant. The AS validates the Delegation
 Assertion signature by chaining its X.509-SVID to the SPIFFE trust
@@ -897,7 +969,7 @@ other security domains. The may_act claim additionally binds each
 ID-JAG to the single entity entitled to present it. An ID-JAG stolen
 in transit or from a compromised workload cannot be used by a
 different workload, because that workload cannot authenticate as the
-entity may_act names, and the AS rejects the exchange at the hop
+entity may_act names, and the AS rejects the request at the hop
 binding check of [](#as-processing).
 
 For self-issued Delegation Assertions, the aud claim MUST be strictly
@@ -1114,21 +1186,18 @@ and issues the ID-JAG shown in the second example of
 because Agent C is in the partner.local trust domain. Agent B passes
 it to Agent C.
 
-Step 4 (Final Exchange at Agent C): Agent C presents the received
-ID-JAG to https://auth.partner.net, the AS named by its aud claim,
-as the subject_token, together with its own JWT-SVID as the
-actor_token, requested_token_type set to
-urn:ietf:params:oauth:token-type:access_token, and both audience and
-resource set to https://db.partner.net, the resource server at
-which the Access Token will be presented, requesting scope
-reports:read and the same narrowed authorization_details. This is the
-last hop, so the target
-entity is Agent C itself and no JWT-SVID is disclosed to a peer. The
-partner AS validates the ID-JAG signature against the signing key of
-https://auth.enterprise.net, verifies that Agent C matches the
-may_act claim of the subject_token, applies the same attenuation and
-policy checks, and issues an Access Token that carries the complete
-lineage:
+Step 4 (Final Redemption at Agent C): Agent C presents the received
+ID-JAG to https://auth.partner.net, the AS named by its aud claim, as
+the assertion of a JWT bearer request as described in [](#last-hop),
+requesting scope reports:read. This is the last hop, so Agent C
+delegates to no one, sends no actor_token, and discloses no JWT-SVID,
+not even its own. The partner AS validates the ID-JAG signature
+against the signing key of https://auth.enterprise.net, verifies that
+Agent C, the authenticated client, matches the may_act claim of the
+assertion, applies the same attenuation and policy checks, and issues
+an Access Token whose aud is https://db.partner.net, the resource
+server named by the resource claim carried forward since Step 2, and
+which carries the complete lineage:
 
 ~~~ json
 {
