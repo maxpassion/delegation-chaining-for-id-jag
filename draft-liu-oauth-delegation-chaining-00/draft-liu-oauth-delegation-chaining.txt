@@ -3,7 +3,7 @@
 
 
 Web Authorization Protocol                                        D. Liu
-Internet-Draft                                             Alibaba Group
+Internet-Draft                                                   Alibaba
 Intended status: Standards Track                         2 November 2026
 Expires: 6 May 2027
 
@@ -1350,5 +1350,5 @@ Acknowledgments
 Author's Address
 
    Dapeng Liu
-   Alibaba Group
+   Alibaba
    Email: max.ldp@alibaba-inc.com
