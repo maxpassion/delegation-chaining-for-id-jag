@@ -30,7 +30,7 @@ author:
 -
   ins: D. Liu
   name: Dapeng Liu
-  org: Alibaba Group
+  org: Alibaba
   email: max.ldp@alibaba-inc.com
 
 stand_alone: yes
