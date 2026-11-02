@@ -3,9 +3,9 @@
 
 
 Web Authorization Protocol                                        D. Liu
-Internet-Draft                                             Alibaba Group
-Intended status: Standards Track                         30 October 2026
-Expires: 3 May 2027
+Internet-Draft                                                   Alibaba
+Intended status: Standards Track                         2 November 2026
+Expires: 6 May 2027
 
 
  Delegation Chaining for the Identity Assertion JWT Authorization Grant
@@ -67,7 +67,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 May 2027.
+   This Internet-Draft will expire on 6 May 2027.
 
 Copyright Notice
 
@@ -1114,9 +1114,9 @@ Table of Contents
               Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
               Internet-Draft, draft-ietf-oauth-identity-assertion-authz-
-              grant-04, 21 May 2026,
+              grant-06, 30 October 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
-              identity-assertion-authz-grant-04>.
+              identity-assertion-authz-grant-06>.
 
    [I-D.ietf-oauth-identity-chaining]
               Schwenkschuster, A., Kasselman, P., Burgin, K., Jenkins,
@@ -1350,5 +1350,5 @@ Acknowledgments
 Author's Address
 
    Dapeng Liu
-   Alibaba Group
+   Alibaba
    Email: max.ldp@alibaba-inc.com
